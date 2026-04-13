@@ -1,0 +1,2 @@
+from .fetch_tasks import fetch_vacancies_from_hh
+from .cleanup_tasks import delete_old_vacancies

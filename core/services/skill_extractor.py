@@ -1,0 +1,60 @@
+
+import logging
+import requests
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from typing import List
+from django.conf import settings
+import pybreaker
+
+
+logger = logging.getLogger(__name__)
+breaker = pybreaker.CircuitBreaker(fail_max=3, reset_timeout=60)
+
+class SkillExtractor:
+    def __init__(self, api_key: str = None, api_url: str = None):
+        self.api_key = api_key or settings.DEEPSEEK_API_KEY
+        self.api_url = api_url or settings.DEEPSEEK_API_URL
+
+
+    def _build_prompt(self, text: str) -> str:
+        return f"""Извлеки из следующего текста вакансии ключевые навыки, которые требуются для данной вакансии. Верни только список навыков через запятую, без дополнительных комментариев. Текст вакансии: {text}"""
+    
+    @breaker
+    @retry (
+            stop = stop_after_attempt(3),
+            wait = wait_exponential(multiplier=1, min=2, max=10),
+            retry = retry_if_exception_type(requests.exceptions.RequestException)
+    )
+
+
+    def _call_api(self, prompt: str) -> str:
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": "deepseek-chat",
+            "messages": [{"role": "user", "content": prompt}],
+            # Можно попробовать поставить температуру 0.1 - 0.5 для более точного извлечения, но может быть менее разнообразным
+            "temperature": 1.0,
+            "max_tokens": 200
+        }
+        response = requests.post(self.api_url, json=payload, headers=headers, timeout=30)
+        print(f"Status: {response.status_code}, Response: {response.text}")
+        response.raise_for_status()
+        data = response.json()
+        return data['choices'][0]['message']['content']
+        
+
+    def extract(self, text: str) -> List[str]:
+        if not text or not text.strip():
+            return []  
+        try:
+            prompt = self._build_prompt(text)
+            result = self._call_api(prompt)
+            skills = [s.strip() for s in result.split(',') if s.strip()]
+            logger.info(f"Extracted {len(skills)} skills from text: {skills}")
+            return skills
+        except Exception as e:
+            logger.error(f"Error extracting skills from text: {e}")
+            return []

@@ -1,0 +1,136 @@
+interactions:
+- request:
+    body: '{"model": "deepseek-chat", "messages": [{"role": "user", "content": "\u041f\u0440\u0438\u0432\u0435\u0434\u0438
+      \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 \u043d\u0430\u0432\u044b\u043a\u0430
+      \u043a \u0441\u0442\u0430\u043d\u0434\u0430\u0440\u0442\u043d\u043e\u043c\u0443
+      \u043a\u0430\u043d\u043e\u043d\u0438\u0447\u0435\u0441\u043a\u043e\u043c\u0443
+      \u0432\u0438\u0434\u0443 (\u043d\u0430\u043f\u0440\u0438\u043c\u0435\u0440,
+      \"Python\", \"Django\", \"PostgreSQL\"). \u0412\u0435\u0440\u043d\u0438 \u0442\u043e\u043b\u044c\u043a\u043e
+      \u043e\u0434\u043d\u043e \u043d\u043e\u0440\u043c\u0430\u043b\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u043e\u0435
+      \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435, \u0431\u0435\u0437 \u043a\u0430\u0432\u044b\u0447\u0435\u043a
+      \u0438 \u0434\u043e\u043f\u043e\u043b\u043d\u0438\u0442\u0435\u043b\u044c\u043d\u044b\u0445
+      \u043a\u043e\u043c\u043c\u0435\u043d\u0442\u0430\u0440\u0438\u0435\u0432. \u0418\u0441\u0445\u043e\u0434\u043d\u043e\u0435
+      \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435: postgresql"}], "temperature":
+      1.0, "max_tokens": 50}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, zstd
+      Authorization:
+      - Bearer sk-6a53b8c8cda84b60a69490989ab1fcd5
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '1087'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.33.0
+    method: POST
+    uri: https://api.deepseek.com/v1/chat/completions
+  response:
+    body:
+      string: '{"id":"b17d889b-183d-4d76-ae74-e767f43de294","object":"chat.completion","created":1775392086,"model":"deepseek-chat","choices":[{"index":0,"message":{"role":"assistant","content":"PostgreSQL"},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":63,"completion_tokens":2,"total_tokens":65,"prompt_tokens_details":{"cached_tokens":0},"prompt_cache_hit_tokens":0,"prompt_cache_miss_tokens":63},"system_fingerprint":"fp_eaab8d114b_prod0820_fp8_kvcache_new_kvcache"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Sun, 05 Apr 2026 12:28:06 GMT
+      Server:
+      - elb
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - 1.1 f7190829a773cc8d45ef80fdd1b99e7e.cloudfront.net (CloudFront)
+      X-Amz-Cf-Id:
+      - VBYVg1JdSbB1th7uSY5M1stbkz4_j7Lg0d0BmndOXux0NKHFmHLMkA==
+      X-Amz-Cf-Pop:
+      - HEL51-P3
+      X-Cache:
+      - Miss from cloudfront
+      X-Content-Type-Options:
+      - nosniff
+      access-control-allow-credentials:
+      - 'true'
+      vary:
+      - origin, access-control-request-method, access-control-request-headers
+      x-ds-trace-id:
+      - 38973daaed78ddcaa80ee52ce2ff24e1
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model": "deepseek-chat", "messages": [{"role": "user", "content": "\u041f\u0440\u0438\u0432\u0435\u0434\u0438
+      \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 \u043d\u0430\u0432\u044b\u043a\u0430
+      \u043a \u0441\u0442\u0430\u043d\u0434\u0430\u0440\u0442\u043d\u043e\u043c\u0443
+      \u043a\u0430\u043d\u043e\u043d\u0438\u0447\u0435\u0441\u043a\u043e\u043c\u0443
+      \u0432\u0438\u0434\u0443 (\u043d\u0430\u043f\u0440\u0438\u043c\u0435\u0440,
+      \"Python\", \"Django\", \"PostgreSQL\"). \u0412\u0435\u0440\u043d\u0438 \u0442\u043e\u043b\u044c\u043a\u043e
+      \u043e\u0434\u043d\u043e \u043d\u043e\u0440\u043c\u0430\u043b\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u043e\u0435
+      \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435, \u0431\u0435\u0437 \u043a\u0430\u0432\u044b\u0447\u0435\u043a
+      \u0438 \u0434\u043e\u043f\u043e\u043b\u043d\u0438\u0442\u0435\u043b\u044c\u043d\u044b\u0445
+      \u043a\u043e\u043c\u043c\u0435\u043d\u0442\u0430\u0440\u0438\u0435\u0432. \u0418\u0441\u0445\u043e\u0434\u043d\u043e\u0435
+      \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435: postgresql"}], "temperature":
+      1.0, "max_tokens": 50}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, zstd
+      Authorization:
+      - Bearer sk-6a53b8c8cda84b60a69490989ab1fcd5
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '1087'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.33.0
+    method: POST
+    uri: https://api.deepseek.com/v1/chat/completions
+  response:
+    body:
+      string: '{"id":"d0db510d-2ba1-4690-a670-e4656514aa91","object":"chat.completion","created":1775392088,"model":"deepseek-chat","choices":[{"index":0,"message":{"role":"assistant","content":"PostgreSQL"},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":63,"completion_tokens":2,"total_tokens":65,"prompt_tokens_details":{"cached_tokens":0},"prompt_cache_hit_tokens":0,"prompt_cache_miss_tokens":63},"system_fingerprint":"fp_eaab8d114b_prod0820_fp8_kvcache_new_kvcache"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Sun, 05 Apr 2026 12:28:08 GMT
+      Server:
+      - elb
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - 1.1 5677608538d4f44055d9258d2e07c208.cloudfront.net (CloudFront)
+      X-Amz-Cf-Id:
+      - KL3b4mUCdkbc_1T6FlkAJ29R6gOumdTkrgBwweDRvwo7exCzHfhIuA==
+      X-Amz-Cf-Pop:
+      - HEL51-P5
+      X-Cache:
+      - Miss from cloudfront
+      X-Content-Type-Options:
+      - nosniff
+      access-control-allow-credentials:
+      - 'true'
+      vary:
+      - origin, access-control-request-method, access-control-request-headers
+      x-ds-trace-id:
+      - 98ff957bf924b9e380e5cdf1113c4d93
+    status:
+      code: 200
+      message: OK
+version: 1

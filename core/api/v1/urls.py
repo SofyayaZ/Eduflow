@@ -1,0 +1,26 @@
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+from . import views
+
+router = DefaultRouter()
+router.register(r'job-targets', views.JobTargetViewSet, basename='job-target')
+router.register(r'user-targets', views.UserTargetViewSet, basename='user-target')
+router.register(r'user-skills', views.UserSkillViewSet, basename='user-skill')
+router.register(r'skills', views.SkillViewSet, basename='skill')
+
+urlpatterns = [
+    path('token/', TokenObtainPairView.as_view(), name = 'token_obtain_pair'),
+    path('token/refresh/', TokenRefreshView.as_view(), name = 'token_refresh'),
+
+    path('register/', views.RegisterView.as_view(), name = 'register'),
+    # path('auth/', views.AuthView.as_view(), name = 'auth'),
+
+    path('profile/', views.ProfileView.as_view(), name = 'profile'),
+
+    path('generate-path/', views.GeneratePathView.as_view(), name = 'generate-path'),
+    path('path-history/', views.PathHistoryView.as_view(), name = 'path-history'),
+
+    path('', include(router.urls)),
+]
