@@ -25,6 +25,8 @@ class SkillNormalizer:
             "джава" : "Java",
             "js" : "JavaScript",
             "sql" : "SQL",
+            "постгрес" : "PostgreSQL",
+            "редис" : "Redis",
         }
         
     # Формирует промпт для нормализации названия навыка
