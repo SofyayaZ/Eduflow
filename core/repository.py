@@ -64,7 +64,8 @@ class VacancyRepository:
     
     @staticmethod
     def get_or_create(**kwargs):
-        return Vacancy.objects.get_or_create(id_vacancy=kwargs['id_vacancy'], defaults=kwargs)
+        vacancy_id = kwargs.pop('id_vacancy')
+        return Vacancy.objects.get_or_create(id_vacancy=vacancy_id, defaults=kwargs)
     
     @staticmethod
     def bulk_create(vacancies_data):
@@ -84,20 +85,20 @@ class VacancyRepository:
         threshold = timezone.now() - timedelta(days=180)
         deleted, _ = Vacancy.objects.filter(fetched_at__lt=threshold).delete()
         return deleted
-    
+
     @staticmethod
-    def exists_by_title_icontains(title_part: str) -> bool:
-        return Vacancy.objects.filter(title__icontains=title_part).exists()
+    def exists_by_title_icontains(title_part: str, region: str = None) -> bool:
+        queryset = Vacancy.objects.filter(title__icontains=title_part)
+        if region:
+            queryset = queryset.filter(region__icontains=region)
+        return queryset.exists()
 
 
 class VacancySkillRepository:
     @staticmethod
-    def create(vacancy, skill):
-        return VacancySkill.objects.create(
-            vacancy=vacancy,
-            skill=skill
-        )
-    
+    def get_all():
+        return VacancySkill.objects.all()
+
     @staticmethod
     def get_or_create(vacancy, skill):
         return VacancySkill.objects.get_or_create(
@@ -106,7 +107,7 @@ class VacancySkillRepository:
         )
 
     @staticmethod
-    ## Для массового создания связей вакансий и навыков (например, при загрузке из вакансий)
+    # Для массового создания связей вакансий и навыков (например, при загрузке из вакансий)
     def bulk_create(relations):
         objs = [VacancySkill(**rel) for rel in relations]
         return VacancySkill.objects.bulk_create(objs, ignore_conflicts=True)
@@ -116,16 +117,22 @@ class VacancySkillRepository:
         return VacancySkill.objects.filter(vacancy_id=vacancy_id).select_related('skill')
     
     @staticmethod
-    def get_skill_importance_for_job_title(job_title: str):
+    def get_skill_importance_for_job_title(job_title: str, region: str = None):
+        """
+        Возвращает навыки и их важность (количество вакансий) для указанной должности.
+        Если передан region, фильтрует вакансии только по этому региону.
+        """
         from core.models import VacancySkill
-        return VacancySkill.objects.filter(
-            vacancy__title__icontains=job_title).values('skill').annotate(importance=Count('vacancy')).order_by('-importance')
+        queryset = VacancySkill.objects.filter(vacancy__title__icontains=job_title)
+        if region:
+            queryset = queryset.filter(vacancy__region__icontains=region)
+        return queryset.values('skill').annotate(importance=Count('vacancy')).order_by('-importance')
 
 
 class SkillPrerequisiteRepository:
     @staticmethod
-    def create(skill, prerequisite_skill):
-        return SkillPrerequisite.objects.create(
+    def get_or_create(skill, prerequisite_skill):
+        return SkillPrerequisite.objects.get_or_create(
             skill=skill,
             prerequisite_skill=prerequisite_skill
         )

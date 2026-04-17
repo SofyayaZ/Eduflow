@@ -1,5 +1,6 @@
 from locust import HttpUser, task, between
 import uuid
+import random
 
 class EduFlowUser(HttpUser):
     wait_time = between(0.5, 2)
@@ -19,17 +20,21 @@ class EduFlowUser(HttpUser):
             print(f"Registration failed for {self.username}: {resp.status_code} - {resp.text}")
             self.access_token = None
             return
-        
+
         # Логин
         resp = self.client.post("/api/v1/token/", json={
             "username": self.username,
             "password": self.password
         })
+        if resp.status_code != 200:
+            print(f"Login failed for {self.username}: {resp.status_code} - {resp.text}")
+            self.access_token = None
+            return
 
         data = resp.json()
         self.access_token = data.get("access")
         if not self.access_token:
-            print("No access token")
+            print("No access token in response")
             return
         self.headers = {"Authorization": f"Bearer {self.access_token}"}
 
@@ -44,7 +49,10 @@ class EduFlowUser(HttpUser):
             print("No job targets available")
             self.target_id = None
             return
-        first_job_id = jobs[0]['id']
+
+        # Выбираем случайную цель
+        random_job = random.choice(jobs)
+        first_job_id = random_job['id']
 
         # Создать цель пользователя
         resp = self.client.post("/api/v1/user-targets/", 
@@ -63,6 +71,8 @@ class EduFlowUser(HttpUser):
             return
         resp = self.client.post("/api/v1/generate-path/", 
                                 json={"job_target_id": self.target_id},
-                                headers=self.headers)
+                                headers=self.headers,
+                                name="/generate-path/")  # группировка в статистике
         if resp.status_code != 200:
             print(f"Generate path failed: {resp.status_code} - {resp.text}")
+            

@@ -11,10 +11,9 @@ logger = logging.getLogger(__name__)
 breaker = pybreaker.CircuitBreaker(fail_max=3, reset_timeout=60)
 
 class SkillExtractor:
-    def __init__(self, api_key: str = None, api_url: str = None):
-        self.api_key = api_key or settings.DEEPSEEK_API_KEY
+    def __init__(self, api_url : str = None, api_key : str = None):
         self.api_url = api_url or settings.DEEPSEEK_API_URL
-
+        self.api_key = api_key or settings.DEEPSEEK_API_KEY
 
     def _build_prompt(self, text: str) -> str:
         return f"""Извлеки из следующего текста вакансии ключевые навыки, которые требуются для данной вакансии. Верни только список навыков через запятую, без дополнительных комментариев. Текст вакансии: {text}"""
@@ -35,12 +34,11 @@ class SkillExtractor:
         payload = {
             "model": "deepseek-chat",
             "messages": [{"role": "user", "content": prompt}],
-            # Можно попробовать поставить температуру 0.1 - 0.5 для более точного извлечения, но может быть менее разнообразным
-            "temperature": 1.0,
+            "temperature": 0.2,
             "max_tokens": 200
         }
         response = requests.post(self.api_url, json=payload, headers=headers, timeout=30)
-        print(f"Status: {response.status_code}, Response: {response.text}")
+        logger.info(f"Status: {response.status_code}, Response: {response.text}")
         response.raise_for_status()
         data = response.json()
         return data['choices'][0]['message']['content']

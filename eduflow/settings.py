@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+from datetime import timedelta
 import os
 from pathlib import Path
 from celery.schedules import crontab
@@ -85,7 +86,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'eduflow_db',
         'USER': 'postgres',
-        'PASSWORD': '*5uma4+7',
+        'PASSWORD': '*5uma4+7', # сейчас нужно для тестов, в продакшене нужно заменить
         'HOST': 'localhost',
         'PORT': '5432',
     }
@@ -161,17 +162,19 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Europe/Moscow'
 
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_TASK_ACKS_LATE = True
+CELERY_TASK_TRACK_STARTED = True
+
 # Every week vacancy parsing
 CELERY_BEAT_SCHEDULE = {
     'fetch-vacancies-hh-weekly': {
         'task': 'core.tasks.fetch_tasks.fetch_vacancies_from_hh',
-        'schedule': 300,
-        # 'schedule': crontab(day_of_week='monday', hour=3, minute=0), 
+        'schedule': crontab(hour=2, minute=8),
     },
     'delete-old-vacancies-weekly': {
         'task': 'core.tasks.cleanup_tasks.delete_old_vacancies',
-        'schedule': 300,
-        # 'schedule': crontab(day_of_week='sunday', hour=4, minute=0),  # раз в неделю
+        'schedule': crontab(day_of_week='sunday', hour=4, minute=0),  # раз в неделю
     },
 }
 
@@ -190,7 +193,19 @@ DEEPSEEK_API_URL = os.getenv('DEEPSEEK_API_URL', 'https://api.deepseek.com/v1/ch
 
 # JWT authentication
 REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',  # для API предпочитаем JSON
+        'rest_framework.renderers.BrowsableAPIRenderer',  # если нужен браузерный интерфейс
     )
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True, # выдать новый токен обновления при обновлении токенов доступа
+    'BLACKLIST_AFTER_ROTATION': True, # добавить старые токены в черный список
 }

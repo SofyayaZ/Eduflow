@@ -10,7 +10,7 @@ class UserSkillViewSet(viewsets.ModelViewSet):
 
     # Возврат навыков текущего пользователя
     def get_queryset(self):
-        return UserSkill.objects.filter(user=self.request.user)
+        return UserSkill.objects.filter(user=self.request.user).select_related('skill')
     
     # Создание навыков с автоматическим привязыванием к пользователю
     def perform_create(self, serializer):

@@ -14,9 +14,9 @@ logger = logging.getLogger(__name__)
 breaker = pybreaker.CircuitBreaker(fail_max=3, reset_timeout=60)
 
 class SkillNormalizer:
-    def __init__(self, api_key: str = None, api_url: str = None):
-        self.api_key = api_key or settings.DEEPSEEK_API_KEY
+    def __init__(self, api_url : str = None, api_key : str = None):
         self.api_url = api_url or settings.DEEPSEEK_API_URL
+        self.api_key = api_key or settings.DEEPSEEK_API_KEY
         self.canonical_map = {
             "питон" : "Python",
             "python3" : "Python",
@@ -27,6 +27,8 @@ class SkillNormalizer:
             "sql" : "SQL",
             "постгрес" : "PostgreSQL",
             "редис" : "Redis",
+            "R" : "R",
+            "r" : "R",
         }
         
     # Формирует промпт для нормализации названия навыка
@@ -94,7 +96,7 @@ class SkillNormalizer:
             # Удаляем кавычки и лишние символы, если они есть
             normalized = re.sub(r'^[\'"]+|[\'"]+$', '', normalized).rstrip('.')
             logger.debug(f"Normalized '{raw_name}' to '{normalized}'")
-            cache.set(cache_key, normalized, timeout=60*60*24*7)
+            cache.set(cache_key, normalized, timeout=60*60*24*30)
             return normalized
         except Exception as e:
             logger.error(f"Error normalizing skill '{raw_name}': {e}")

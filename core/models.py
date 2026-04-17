@@ -35,12 +35,12 @@ class Skill(models.Model):
 
 class Vacancy(models.Model):
     id_vacancy = models.CharField(max_length=255, unique=True, primary_key=True)  # уникальный идентификатор вакансии
-    title = models.TextField()                                 # заголовок вакансии
+    title = models.TextField()                                                    # заголовок вакансии
     published_at = models.DateTimeField(default=timezone.now)                     # дата публикации
-    company = models.CharField(max_length=255)                 # компания-работодатель
-    source = models.CharField(max_length=50)                   
-    fetched_at = models.DateTimeField(auto_now_add=True)       # дата загрузки в нашу БД
-    region = models.CharField(max_length=100, blank=True, db_index=True)
+    company = models.CharField(max_length=255)                                    # компания-работодатель
+    source = models.CharField(max_length=50)                                      # источник вакансии (например, hh.ru)
+    fetched_at = models.DateTimeField(auto_now_add=True)                          # дата загрузки в нашу БД
+    region = models.CharField(max_length=100, blank=True, db_index=True)          # регион вакансии
     description = models.TextField(blank=True)
     class Meta:
         db_table = 'Vacancies'

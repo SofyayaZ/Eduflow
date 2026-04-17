@@ -66,13 +66,19 @@ class TestUserTargetViewSet:
 class TestGeneratePathView:
     def test_generate_path_missing_skills(self, auth_client, test_user, job_target, skill_python, skill_django):
         SkillPrerequisite.objects.create(skill=skill_django, prerequisite_skill=skill_python)
-        # Создаём вакансию и связь с навыками
-        vacancy = Vacancy.objects.create(id_vacancy='v1', title='Python developer', company='C', source='hh', published_at=timezone.now())
+        # Создаём вакансию с регионом, совпадающим с регионом пользователя
+        vacancy = Vacancy.objects.create(
+            id_vacancy='v1',
+            title='Python developer',
+            company='C',
+            source='hh',
+            published_at=timezone.now(),
+            region=test_user.preferred_region or 'Moscow'  # добавляем регион
+        )
         VacancySkill.objects.create(vacancy=vacancy, skill=skill_python)
         VacancySkill.objects.create(vacancy=vacancy, skill=skill_django)
         # У пользователя есть Python, нет Django
         UserSkill.objects.create(user=test_user, skill=skill_python)
-        # Создаём цель
         target = UserTarget.objects.create(user=test_user, target_job=job_target)
         url = reverse('generate-path')
         response = auth_client.post(url, {'job_target_id': target.id})
@@ -88,11 +94,16 @@ class TestGeneratePathView:
         assert steps.first().skill.name == 'Django'
 
     def test_no_vacancies(self, auth_client, test_user, job_target):
+        # Убедимся, что у пользователя есть регион
+        test_user.preferred_region = 'Moscow'
+        test_user.save()
         target = UserTarget.objects.create(user=test_user, target_job=job_target)
         url = reverse('generate-path')
         response = auth_client.post(url, {'job_target_id': target.id})
+        # Ожидаем 200, так как это не ошибка сервера, а информирование пользователя
         assert response.status_code == 200
-        assert response.data['message'] == 'No vacancies found for this job target'
+        assert response.data['message'] == f'По вашему региону "{test_user.preferred_region}" вакансий для выбранной цели не найдено. Попробуйте сменить регион в профиле.'
+
 
 @pytest.mark.django_db
 class TestPathHistoryView:

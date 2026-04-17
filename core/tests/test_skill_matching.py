@@ -2,6 +2,7 @@ import pytest
 from core.models import Skill, UserSkill, Vacancy, VacancySkill
 from core.services.skill_matching import SkillMatchingService
 from datetime import datetime
+from django.utils import timezone
 
 
 @pytest.fixture
@@ -39,10 +40,42 @@ def test_get_required_skills_for_target(vacancies_and_skills, skills):
     assert required_skills[2][0].name == 'harbor'
     assert required_skills[2][1] == 1
 
-def test_get_missing_skills(test_user, vacancies_and_skills, skills):
+def test_get_missing_skills(test_user, skills):
+    from core.models import Vacancy, VacancySkill
+    
+    # Создаём вакансию для DevOps engineer
+    vacancy = Vacancy.objects.create(
+        id_vacancy='devops_vacancy_1',
+        title='DevOps engineer',
+        company='TestCompany',
+        source='test',
+        published_at=timezone.now(),
+        region='Moscow'
+    )
+    # Создаём связи вакансии с навыками (с указанием важности через количество вакансий)
+    # Для простоты создадим три связи: CI/CD, kubernetes, harbor
+    # Чтобы получить importance = 2 для CI/CD, нужно создать две вакансии с этим навыком
+    VacancySkill.objects.create(vacancy=vacancy, skill=skills['CI/CD'])
+    # Вторая вакансия для увеличения importance CI/CD
+    vacancy2 = Vacancy.objects.create(
+        id_vacancy='devops_vacancy_2',
+        title='DevOps engineer',
+        company='TestCompany',
+        source='test',
+        published_at=timezone.now(),
+        region='Moscow'
+    )
+    VacancySkill.objects.create(vacancy=vacancy2, skill=skills['CI/CD'])
+    
+    # Для kubernetes и harbor – по одной вакансии
+    VacancySkill.objects.create(vacancy=vacancy, skill=skills['kubernetes'])
+    VacancySkill.objects.create(vacancy=vacancy, skill=skills['harbor'])
+    
+    # У пользователя уже есть kubernetes и harbor
     UserSkill.objects.create(user=test_user, skill=skills['kubernetes'])
     UserSkill.objects.create(user=test_user, skill=skills['harbor'])
+    
     missing_skills = SkillMatchingService.get_missing_skills(test_user, target_job_title='DevOps engineer')
     assert len(missing_skills) == 1
     assert missing_skills[0][0].name == 'CI/CD'
-    assert missing_skills[0][1] == 2
+    assert missing_skills[0][1] == 2   # importance = количество вакансий с этим навыком = 2

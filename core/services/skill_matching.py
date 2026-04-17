@@ -1,5 +1,7 @@
 from typing import List, Tuple
 from core.models import User, Skill
+from django.db.models import Q
+import re
 from core.repository import (
     UserSkillRepository, VacancySkillRepository,
     SkillRepository, VacancyRepository
@@ -7,8 +9,8 @@ from core.repository import (
 
 class SkillMatchingService:
     @staticmethod
-    def get_required_skills_for_target(target_job_title: str) -> List[Tuple[Skill, int]]:
-        skills_importance = VacancySkillRepository.get_skill_importance_for_job_title(target_job_title)
+    def get_required_skills_for_target(target_job_title: str, region: str = None) -> List[Tuple[Skill, int]]:
+        skills_importance = VacancySkillRepository.get_skill_importance_for_job_title(target_job_title, region=region)
         result = []
         for item in skills_importance:
             skill = SkillRepository.get_by_id(item['skill'])
@@ -21,9 +23,11 @@ class SkillMatchingService:
         user_skill_ids = set(
             UserSkillRepository.get_skills_for_user(user).values_list('skill_id', flat=True)
         )
-        required = SkillMatchingService.get_required_skills_for_target(target_job_title)
+        region = user.preferred_region if user.preferred_region else None
+        required = SkillMatchingService.get_required_skills_for_target(target_job_title, region=region)
         return [(skill, imp) for skill, imp in required if skill.id not in user_skill_ids]
 
     @staticmethod
-    def has_vacancies_for_target(target_job_title: str) -> bool:
-        return VacancyRepository.exists_by_title_icontains(target_job_title)
+    def has_vacancies_for_target(target_job_title: str, region: str = None) -> bool:
+        return VacancyRepository.exists_by_title_icontains(target_job_title, region=region)
+    

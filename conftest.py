@@ -6,6 +6,10 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from core.models import JobTarget, Skill, UserTarget, Vacancy
 from core.services.vacancy_fetcher import HHVacancyFetcher
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 User = get_user_model()
 
@@ -28,6 +32,7 @@ def test_user(db):
     )
     return user
 
+
 @pytest.fixture
 def hh_fetcher():
     return HHVacancyFetcher(job_titles=['Python developer'], region_code=1)
@@ -45,7 +50,8 @@ def skills(db):
     python = Skill.objects.create(name='Python')
     django = Skill.objects.create(name='Django')
     sql = Skill.objects.create(name='SQL')
-    return {'python': python, 'django': django, 'sql': sql}
+    java = Skill.objects.create(name='Java')
+    return {'python': python, 'django': django, 'sql': sql, 'java': java}
 
 # Если нужен отдельный skill_python, skill_django – можно определить их отдельно
 @pytest.fixture
@@ -55,6 +61,10 @@ def skill_python(db):
 @pytest.fixture
 def skill_django(db):
     return Skill.objects.create(name='Django')
+
+@pytest.fixture
+def skill_pandas(db):
+    return Skill.objects.create(name='Pandas')
 
 @pytest.fixture
 def vacancy(db):
