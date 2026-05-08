@@ -1,4 +1,6 @@
 import { useNavigate } from 'react-router-dom';
+import '../styles/pages/landing-page.css';
+
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -15,7 +17,7 @@ export default function Landing() {
       <section className="hero">
         <h1>Построй свою карьеру</h1>
         <p>Персональные образовательные траектории<br />на основе данных рынка труда</p>
-        <button className="btn-start" onClick={() => navigate('/login')}>Начать</button>
+        <button className="btn-start" onClick={() => navigate('/register')}>Начать</button>
       </section>
 
       <section className="steps">

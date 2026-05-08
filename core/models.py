@@ -54,6 +54,7 @@ class Vacancy(models.Model):
     fetched_at = models.DateTimeField(auto_now_add=True)                          # дата загрузки в нашу БД
     region = models.CharField(max_length=100, blank=True, db_index=True)          # регион вакансии
     description = models.TextField(blank=True)
+    job_target = models.ForeignKey('JobTarget', null=True, on_delete=models.SET_NULL)
     class Meta:
         db_table = 'Vacancies'
     def __str__(self):
@@ -73,8 +74,7 @@ class VacancySkill(models.Model):
     vacancy = models.ForeignKey(
         Vacancy,
         on_delete=models.CASCADE,
-        related_name='vacancy_skills',
-        to_field='id_vacancy'   # ← явно ссылаемся на поле id_vacancy
+        related_name='vacancy_skills'
     )
     skill = models.ForeignKey(Skill, on_delete=models.CASCADE, related_name='vacancy_skills')
     class Meta:
@@ -87,7 +87,13 @@ class SkillPrerequisite(models.Model):
     prerequisite_skill = models.ForeignKey(Skill, on_delete=models.CASCADE, related_name='required_for')
     class Meta:
         db_table = 'SkillPrerequisites'
-        constraints = [models.UniqueConstraint(fields=['skill', 'prerequisite_skill'], name='unique_skill')]  # уникальность пары
+        constraints = [
+            models.UniqueConstraint(fields=['skill', 'prerequisite_skill'], name='unique_skill'),
+            models.CheckConstraint(
+                condition=~models.Q(skill=models.F('prerequisite_skill')),
+                name='no_self_prerequisite'
+            )
+        ]
     def __str__(self):
         return f"{self.prerequisite_skill.name} → {self.skill.name}"
     
@@ -97,7 +103,7 @@ class UserSkill(models.Model):
     skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
     class Meta:
         db_table = 'UserSkills'
-        unique_together = ('user', 'skill')  # чтобы не дублировать
+        constraints = [models.UniqueConstraint(fields=['user', 'skill'], name='unique_user_skill')]
     def __str__(self):
         return f"{self.user.username} - {self.skill.name}"
 
@@ -107,7 +113,7 @@ class UserTarget(models.Model):
     target_job = models.ForeignKey(JobTarget, on_delete=models.CASCADE, related_name='users_target')
     class Meta:
         db_table = 'UserTargets'
-        unique_together = ('user', 'target_job')
+        constraints = [models.UniqueConstraint(fields=['user', 'target_job'], name='unique_user_target')]
     def __str__(self):
         return f"{self.user.username}: {self.target_job.name}"
 

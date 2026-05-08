@@ -1,13 +1,23 @@
-// src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Sidebar from './components/Sidebar';
-import Landing from './components/Landing';
-import Login from './components/Login';
-import Register from './components/Register';
-import Profile from './components/Profile';
-import GeneratePath from './components/GeneratePath';
-import PathHistory from './components/PathHistory';
+import Landing from './pages/Landing';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Profile from './pages/Profile';
+import GeneratePath from './pages/GeneratePath';
+import PathHistory from './pages/PathHistory';
+
+// Стили
+import './styles/globals.css';
+import './styles/layout/header.css';
+import './styles/layout/footer.css';
+import './styles/layout/sidebar.css';
+import './styles/components/info-note.css';
+import './styles/components/buttons.css';
+import './styles/components/forms.css';
+import './styles/components/auth-card.css';
+
 
 function AppRoutes() {
   const { user, loading } = useAuth();

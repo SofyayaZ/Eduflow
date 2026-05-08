@@ -1,8 +1,3 @@
-from typing import List
-from typing import Tuple
-from core.models import Skill
-
-
 class RankingService:
     @staticmethod
     def rank_skills_by_importance(skills_or_pairs):

@@ -1,0 +1,74 @@
+.path-page {
+    /* width: 100%; */
+    background: white;
+    border-radius: 32px;
+    box-shadow: 0 20px 55px rgba(0,0,0,0.05);
+    margin: 40px 60px;
+    padding: 40px;
+}
+
+
+/* Стили графа */
+.graph-container {
+    background: #f9fafc;
+    border-radius: 28px;
+    padding: 30px;
+    margin-bottom: 30px;
+    border: 1px solid #e0e8ef;
+    min-height: 350px;
+}
+
+.graph-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 32px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.graph-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 50px;
+    margin: 15px 0;
+    flex-wrap: wrap;
+}
+
+.graph-node {
+    background: white;
+    border: 2px solid #1a5f9c;
+    border-radius: 40px;
+    padding: 12px 25px;
+    font-weight: 600;
+    color: #1a5f9c;
+    box-shadow: 0 4px 8px rgba(26,95,156,0.1);
+    position: relative;
+}
+
+.arrow-right::after {
+    content: "→";
+    position: absolute;
+    right: -35px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.8rem;
+    color: #1a5f9c;
+}
+
+.arrow-down {
+    display: block;
+    font-size: 2rem;
+    color: #1a5f9c;
+    margin: 5px 0;
+    text-align: center;
+}
+
+/* Начертание фразы под заголовком*/
+.subtitle {
+    margin-bottom: 10px;
+}
+

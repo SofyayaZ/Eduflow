@@ -1,0 +1,62 @@
+/* Блоки */
+.steps {
+    text-align: center;
+    background-color: white;
+    margin-bottom: 60px;
+}
+.steps h2, .trust h2 {
+    font-size: 2.2rem;
+    color: #0a1a2b;
+    margin-bottom: 40px;
+}
+.step-cards {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+.card {
+    background-color: #e7eefe;
+    border-radius: 24px;
+    padding: 30px 20px;
+    width: 240px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.02);
+    border: 1px solid #e0e8ef;
+}
+.card .step-number {
+    background-color: #1a5f9c;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    margin: 0 auto 20px;
+}
+.arrow {
+    font-size: 2rem;
+    color: #1a5f9c;
+    align-self: center;
+}
+
+.trust {
+    background-color: #eef3f8;
+}
+.trust-list {
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+    flex-wrap: wrap;
+    list-style: none;
+}
+.trust-list li {
+    font-size: 1.2rem;
+    color: #1a2b3c;
+    background: white;
+    padding: 15px 30px;
+    border-radius: 50px;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.03);
+    border: 1px solid #d0ddee;
+}

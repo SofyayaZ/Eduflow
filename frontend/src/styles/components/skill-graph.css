@@ -1,0 +1,13 @@
+.skill-graph-container {
+  height: 600px;
+  width: 100%;
+}
+/* Можно переопределить стили React Flow, если нужно */
+.react-flow__edge-path {
+  stroke: #1a5f9c;
+  stroke-width: 2;
+}
+.react-flow__edge.animated .react-flow__edge-path {
+  stroke-dasharray: 5;
+  animation: dashdraw 0.5s linear infinite;
+}

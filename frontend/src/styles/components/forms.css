@@ -1,0 +1,51 @@
+.field {
+    margin-bottom: 25px;
+}
+
+.field label {
+    display: block;
+    font-weight: 500;
+    color: #2c3e50;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.field input {
+    width: 100%;
+    padding: 14px 18px;
+    border: 1px solid #d0ddee;
+    border-radius: 24px;
+    font-size: 1rem;
+    outline: none;
+    transition: border 0.2s;
+    background: #f9fafc;
+}
+
+.field input:focus {
+    border-color: #1a5f9c;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 35px;
+    flex-wrap: wrap;
+}
+
+.section select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231a5f9c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+    background-repeat: no-repeat;
+    background-position: left 12px center; 
+    background-size: 16px;
+    padding-left: 36px;   /* чтобы текст не наезжал на стрелку */
+    padding-right: 12px;
+    cursor: pointer;
+}
+
+.section select::-ms-expand {
+    display: none;
+}

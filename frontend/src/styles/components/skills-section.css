@@ -1,0 +1,89 @@
+.skill-name {
+    display: flex;
+    font-weight: 600;
+    color: #0a1a2b;
+}
+
+.section {
+    background: #eff4ff;
+    border-radius: 24px;
+    padding: 25px;
+    margin-bottom: 30px;
+}
+
+.list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    border-radius: 50px;
+    padding: 12px 20px;
+    margin-bottom: 10px;
+    /* height: 80px; */
+    border: 1px solid #e0e8ef;
+}
+
+.edit-btn {
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 5px 10px;
+    border-radius: 20px;
+    color: #1a5f9c;
+    background: #e1ebf5;
+}
+
+/* Поиск имеющихся навыков с автодополнением */
+.autocomplete-dropdown {
+  position: absolute;
+  background: white;
+  border: 1px solid #d0ddee;
+  border-radius: 16px;
+  max-height: 200px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  z-index: 10;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.autocomplete-item {
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.autocomplete-item:hover {
+  background-color: #eef3fc;
+}
+
+.autocomplete-no-results {
+  padding: 8px 16px;
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+.skill-search-input {
+  width: 100%;
+  padding: 10px 16px;
+  font-size: 1rem;
+  border: 1px solid #d0ddee;
+  border-radius: 40px;      
+  background-color: #fff;
+  transition: all 0.2s ease;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.skill-search-input:focus {
+  border-color: #1a5f9c;
+  box-shadow: 0 0 0 3px rgba(26, 95, 156, 0.1);
+}
+
+.skill-search-input::placeholder {
+  color: #9aaebf;
+  font-weight: 400;
+}

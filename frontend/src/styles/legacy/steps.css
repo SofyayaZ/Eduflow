@@ -1,0 +1,51 @@
+/* Новые стили для списка шагов */
+.path-steps-list h3 {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    color: #0a1a2b;
+}
+
+.steps-timeline {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.step-timeline-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: white;
+    border-radius: 60px;
+    padding: 10px 20px;
+    border: 1px solid #e0e8ef;
+    transition: all 0.2s;
+}
+
+.step-timeline-item:hover {
+    transform: translateX(8px);
+    border-color: #1a5f9c;
+    box-shadow: 0 4px 12px rgba(26,95,156,0.1);
+}
+
+.step-number-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: #1a5f9c;
+    color: white;
+    font-weight: bold;
+    border-radius: 50%;
+    font-size: 1rem;
+}
+
+.step-skill-name {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #1a2b3c;
+}

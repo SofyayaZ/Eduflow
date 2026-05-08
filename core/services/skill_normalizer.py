@@ -17,7 +17,7 @@ class SkillNormalizer:
     def __init__(self, api_url : str = None, api_key : str = None):
         self.api_url = api_url or settings.DEEPSEEK_API_URL
         self.api_key = api_key or settings.DEEPSEEK_API_KEY
-        self.type_classifier = SkillTypeClassifier(api_url, api_key)
+        self.type_classifier = SkillTypeClassifier()
         self.canonical_map = {
             "питон" : "Python",
             "python3" : "Python",
@@ -104,13 +104,13 @@ class SkillNormalizer:
     def get_or_create_skill(self, raw_skill_name: str) -> Skill:
         normalized_name = self.normalize(raw_skill_name)
         if not normalized_name:
-            logger.warning(f"Normalized skill name is empty for raw name '{raw_skill_name}'")
             return None
-        skill, created = SkillRepository.get_or_create(name=normalized_name)
+        skill_type = self.type_classifier.classify_without_db(normalized_name)
+        skill, created = SkillRepository.get_or_create(
+            name=normalized_name, 
+            skill_type=skill_type
+        )
         if created:
-            skill_type = self.type_classifier.classify(normalized_name)
-            skill.skill_type = skill_type
-            skill.save(update_fields=['skill_type'])
-            logger.info(f"Created new skill: {normalized_name} with type: {skill_type}")
+            logger.info(f"Created new skill: {normalized_name} with type {skill_type}")
         return skill
     

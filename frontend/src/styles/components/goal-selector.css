@@ -1,0 +1,52 @@
+.goal-name {
+    display: flex;
+    font-weight: 600;
+    color: #0a1a2b;
+}
+
+.goal-selector {
+    background: #f9fafc;
+    border-radius: 28px;
+    padding: 20px 25px;
+    margin-bottom: 30px;
+    border: 1px solid #e0e8ef;
+}
+.goal-selector label {
+    font-weight: 600;
+    display: flex;
+    margin-bottom: 10px;
+    color: #1a2b3c;
+}
+.goal-selector target-label {
+    font-weight: 600;
+    display: flex;
+    margin-bottom: 6px;
+    color: #1a2b3c;
+}
+.goal-options {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+.goal-radio {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: white;
+    padding: 8px 18px;
+    border-radius: 40px;
+    border: 1px solid #d0ddee;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.goal-radio.selected {
+    border-color: #1a5f9c;
+    background: #eef3fc;
+}
+.goal-radio input {
+    accent-color: #1a5f9c;
+    width: 18px;
+    height: 18px;
+}

@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'core',
     'django_celery_beat',
-    'django_extensions'
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -168,8 +168,8 @@ CELERY_TASK_TRACK_STARTED = True
 
 # Every week vacancy parsing
 CELERY_BEAT_SCHEDULE = {
-    'fetch-vacancies-hh-weekly': {
-        'task': 'core.tasks.fetch_tasks.fetch_vacancies_from_hh',
+    'fetch-vacancies-weekly': {
+        'task': 'core.tasks.fetch_tasks.fetch_vacancies',
         'schedule': crontab(hour=2, minute=8),
     },
     'delete-old-vacancies-weekly': {

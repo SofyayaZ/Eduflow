@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import api from '../api';
 import { Link } from 'react-router-dom';
 
+import '../styles/pages/path-history-page.css'
+
+
 export default function PathHistory() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);

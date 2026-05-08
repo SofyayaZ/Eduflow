@@ -1,6 +1,8 @@
 import logging
 import pybreaker
 from core.models import Skill
+from core.repository import SkillRepository
+
 
 logger = logging.getLogger(__name__)
 breaker = pybreaker.CircuitBreaker(fail_max=3, reset_timeout=60)
@@ -17,6 +19,7 @@ class SkillTypeClassifier:
             'командная работа': Skill.SkillType.SOFT,
             'самостоятельная работа': Skill.SkillType.SOFT,
             'consistency': Skill.SkillType.SOFT,
+            'постоянство': Skill.SkillType.SOFT,
             'research': Skill.SkillType.SOFT,
             'исследовательские навыки': Skill.SkillType.SOFT,
             'презентация': Skill.SkillType.SOFT,
@@ -146,10 +149,17 @@ class SkillTypeClassifier:
             'optimizely': Skill.SkillType.TOOL,
         }
 
-    def classify(self, skill_name: str) -> str:
+    def classify_without_db(self, skill_name: str) -> str:
+        """
+        Классифицирует навык без обращения к базе данных.
+        Использует только rule_based_map и значение по умолчанию.
+        """
         if not skill_name:
             return Skill.SkillType.HARD
 
         lower_name = skill_name.lower()
         if lower_name in self.rule_based_map:
             return self.rule_based_map[lower_name]
+
+        logger.debug(f"No type rule for '{skill_name}', defaulting to HARD")
+        return Skill.SkillType.HARD

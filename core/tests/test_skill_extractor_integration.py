@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 from core.services.skill_extractor import SkillExtractor
 
-# Загружаем переменные из .env файла (находится в корне проекта)
+
 load_dotenv()
 
 my_vcr = vcr.VCR(

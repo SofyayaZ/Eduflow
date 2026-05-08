@@ -7,11 +7,6 @@ from core.api.v1.serializers import UserSerializer
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
-    # def get(self, request):
-    #     # Переводим данные в JSON-формат
-    #     serializer = UserSerializer(request.user)
-    #     return Response(serializer.data)
-
     def get(self, request):
         print(request.user, request.user.is_authenticated, request.auth)
         serializer = UserSerializer(request.user)

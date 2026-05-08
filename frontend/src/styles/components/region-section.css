@@ -1,0 +1,15 @@
+.region-select {
+    width: 100%;
+    padding: 12px 20px;
+    border-radius: 40px;
+    border: 1px solid #d0ddee;
+    background: white;
+    font-size: 1rem;
+    margin-top: 10px;
+    cursor: pointer;
+}
+.region-info {
+    font-size: 0.9rem;
+    color: #5f6c7a;
+    margin-top: 8px;
+}

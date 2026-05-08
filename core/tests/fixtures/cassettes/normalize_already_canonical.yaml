@@ -1,0 +1,67 @@
+interactions:
+- request:
+    body: '{"model": "deepseek-chat", "messages": [{"role": "user", "content": "\u041f\u0440\u0438\u0432\u0435\u0434\u0438
+      \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 \u043d\u0430\u0432\u044b\u043a\u0430
+      \u043a \u0441\u0442\u0430\u043d\u0434\u0430\u0440\u0442\u043d\u043e\u043c\u0443
+      \u043a\u0430\u043d\u043e\u043d\u0438\u0447\u0435\u0441\u043a\u043e\u043c\u0443
+      \u0432\u0438\u0434\u0443 (\u043d\u0430\u043f\u0440\u0438\u043c\u0435\u0440,
+      \"Python\", \"Django\", \"PostgreSQL\"). \u0412\u0435\u0440\u043d\u0438 \u0442\u043e\u043b\u044c\u043a\u043e
+      \u043e\u0434\u043d\u043e \u043d\u043e\u0440\u043c\u0430\u043b\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u043e\u0435
+      \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435, \u0431\u0435\u0437 \u043a\u0430\u0432\u044b\u0447\u0435\u043a
+      \u0438 \u0434\u043e\u043f\u043e\u043b\u043d\u0438\u0442\u0435\u043b\u044c\u043d\u044b\u0445
+      \u043a\u043e\u043c\u043c\u0435\u043d\u0442\u0430\u0440\u0438\u0435\u0432. \u0418\u0441\u0445\u043e\u0434\u043d\u043e\u0435
+      \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435: Celery"}], "temperature":
+      0.2, "max_tokens": 50}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '1083'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.33.0
+    method: POST
+    uri: https://api.deepseek.com/v1/chat/completions
+  response:
+    body:
+      string: '{"id":"c7327dc2-cec8-4493-ace1-5ff9f0aa5afc","object":"chat.completion","created":1777998181,"model":"deepseek-v4-flash","choices":[{"index":0,"message":{"role":"assistant","content":"Celery"},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":62,"completion_tokens":2,"total_tokens":64,"prompt_tokens_details":{"cached_tokens":0},"prompt_cache_hit_tokens":0,"prompt_cache_miss_tokens":62},"system_fingerprint":"fp_058df29938_prod0820_fp8_kvcache_20260402"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - br
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 05 May 2026 16:23:01 GMT
+      Server:
+      - elb
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - 1.1 80e24ce556086e805cf92c8a731e137a.cloudfront.net (CloudFront)
+      X-Amz-Cf-Id:
+      - Mt94YwAH_Gr8ehsmcml9y0eypbE0SI-aGRZF5CLOy1feQZ5WcqTH6A==
+      X-Amz-Cf-Pop:
+      - HEL51-P4
+      X-Cache:
+      - Miss from cloudfront
+      X-Content-Type-Options:
+      - nosniff
+      access-control-allow-credentials:
+      - 'true'
+      vary:
+      - origin, access-control-request-method, access-control-request-headers
+      x-ds-trace-id:
+      - c60b46776826c1260d9dfe279803b48d
+    status:
+      code: 200
+      message: OK
+version: 1

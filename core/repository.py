@@ -1,3 +1,5 @@
+from typing import List
+
 from django.utils import timezone
 from datetime import timedelta
 from .models import (
@@ -5,6 +7,7 @@ from .models import (
     UserTarget, GeneratedPath, PathStep, UserSkill
 )
 from django.db.models import Count
+from django.contrib.postgres.search import SearchVector, SearchQuery
 
 
 class SkillRepository:
@@ -15,6 +18,7 @@ class SkillRepository:
     @staticmethod
     def get_by_id(skill_id):
         return Skill.objects.get(id=skill_id)
+    
     @staticmethod
     def get_by_id_list(ids):
         return Skill.objects.filter(id__in=ids)
@@ -24,23 +28,41 @@ class SkillRepository:
         return Skill.objects.filter(name=name).first()
     
     @staticmethod
-    def create(name):
-        return Skill.objects.create(name=name)
+    def get_skill_type_by_name(name):
+        skill = Skill.objects.only('skill_type').filter(name=name).first()
+        return skill.skill_type if skill else None
     
     @staticmethod
-    def get_or_create(name):
-        return Skill.objects.get_or_create(name=name)
+    def filter_by_skill_type(skill_type):
+        return Skill.objects.filter(skill_type=skill_type)
     
-    # Для массового создания навыков (например, при загрузке из вакансий)
     @staticmethod
-    def bulk_create(names):
-        skills = [Skill(name=name) for name in set(names)]
+    def create(name, skill_type=Skill.SkillType.HARD):
+        return Skill.objects.create(name=name, skill_type=skill_type)
+    
+    @staticmethod
+    def get_or_create(name, skill_type=Skill.SkillType.HARD):
+        skill, created = Skill.objects.get_or_create(
+            name=name,
+            defaults={'skill_type': skill_type}
+        )
+        if not created and skill.skill_type != skill_type:
+            skill.skill_type = skill_type
+            skill.save(update_fields=['skill_type'])
+        return skill, created
+    
+    @staticmethod
+    def bulk_create(names, skill_type=Skill.SkillType.HARD):
+        skills = [Skill(name=name, skill_type=skill_type) for name in set(names)]
         return Skill.objects.bulk_create(skills, ignore_conflicts=True)
     
     @staticmethod
-    def update(skill_id, name):
+    def update(skill_id, name=None, skill_type=None):
         skill = Skill.objects.get(id=skill_id)
-        skill.name = name
+        if name is not None:
+            skill.name = name
+        if skill_type is not None:
+            skill.skill_type = skill_type
         skill.save()
         return skill
     
@@ -87,11 +109,15 @@ class VacancyRepository:
         return deleted
 
     @staticmethod
-    def exists_by_title_icontains(title_part: str, region: str = None) -> bool:
-        queryset = Vacancy.objects.filter(title__icontains=title_part)
+    def exists_for_job_target(job_target: JobTarget, region: str = None) -> bool:
+        queryset = Vacancy.objects.filter(job_target=job_target)
         if region:
             queryset = queryset.filter(region__icontains=region)
         return queryset.exists()
+    
+    @staticmethod
+    def get_existing_ids(id_list: List[str]) -> set:
+        return set(Vacancy.objects.filter(id_vacancy__in=id_list).values_list('id_vacancy', flat=True))
 
 
 class VacancySkillRepository:
@@ -118,15 +144,24 @@ class VacancySkillRepository:
     
     @staticmethod
     def get_skill_importance_for_job_title(job_title: str, region: str = None):
-        """
-        Возвращает навыки и их важность (количество вакансий) для указанной должности.
-        Если передан region, фильтрует вакансии только по этому региону.
-        """
-        from core.models import VacancySkill
-        queryset = VacancySkill.objects.filter(vacancy__title__icontains=job_title)
+        # Разбиваем job_title на слова и соединяем через ' & ' (логическое И)
+        words = job_title.lower().replace('-', ' ').split()
+        query_string = ' & '.join(words) 
+        search_query = SearchQuery(query_string, config='russian')
+
+        # Аннотируем вакансии поисковым вектором и фильтруем
+        vacancies_qs = Vacancy.objects.annotate(
+            search=SearchVector('title', config='russian')
+        ).filter(search=search_query)
+
         if region:
-            queryset = queryset.filter(vacancy__region__icontains=region)
-        return queryset.values('skill').annotate(importance=Count('vacancy')).order_by('-importance')
+            vacancies_qs = vacancies_qs.filter(region__icontains=region)
+
+        # Теперь собираем навыки
+        return VacancySkill.objects.filter(vacancy__in=vacancies_qs) \
+            .values('skill') \
+            .annotate(importance=Count('vacancy')) \
+            .order_by('-importance')
 
 
 class SkillPrerequisiteRepository:
@@ -145,6 +180,14 @@ class SkillPrerequisiteRepository:
     @staticmethod
     def get_prerequisites(skill):
         return SkillPrerequisite.objects.filter(skill=skill).select_related('prerequisite_skill')
+    
+    @staticmethod
+    def exists(prerequisite_skill: Skill, target_skill: Skill) -> bool:
+        """Проверяет, существует ли связь prerequisite_skill → target_skill."""
+        return SkillPrerequisite.objects.filter(
+            skill=target_skill,
+            prerequisite_skill=prerequisite_skill
+        ).exists()
 
 class JobTargetRepository:
     @staticmethod
@@ -248,3 +291,4 @@ class UserSkillRepository:
     def bulk_add(user, skills):
         objs = [UserSkill(user=user, skill=skill) for skill in skills]
         return UserSkill.objects.bulk_create(objs, ignore_conflicts=True)
+    

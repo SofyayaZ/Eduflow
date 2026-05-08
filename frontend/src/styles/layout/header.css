@@ -1,0 +1,47 @@
+/* Header на главной странице */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    border-bottom: 1px solid #eaeef2;
+}
+
+.logo {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: #03223d;
+}
+
+.auth-buttons {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.register-btn {
+    background-color: transparent;
+    border: 1px solid #1a5f9c;
+    color: #1a5f9c;
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.register-btn:hover {
+    background-color: #eef3fc;
+}
+
+.login-btn {
+    background-color: #1a5f9c;
+    border: 1px solid #1a5f9c;
+    color: white !important;
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+.login-btn:hover {
+    background-color: #0e3e6b;
+}

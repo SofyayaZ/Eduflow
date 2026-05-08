@@ -1,0 +1,87 @@
+.btn {
+    padding: 12px 28px;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+.btn-primary {
+    background: #1a5f9c;
+    color: white;
+    box-shadow: 0 5px 10px rgba(26,95,156,0.2);
+}
+.btn-primary:hover {
+    background: #0e4a7a;
+}
+.btn-secondary {
+    background: white;
+    border: 1px solid #b0c4de;
+    color: #2c3e50;
+}
+.btn-secondary:hover {
+    background: #f0f5fa;
+}
+
+.btn-start {
+    background-color: #1a5f9c;
+    color: white;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: 600;
+    padding: 15px 50px;
+    border-radius: 40px;
+    cursor: pointer;
+    box-shadow: 0 8px 16px rgba(26,95,156,0.2);
+    transition: transform 0.2s;
+}
+
+.btn-start:hover {
+    transform: scale(1.02);
+    background-color: #0e4a7a;
+}
+
+.delete-btn {
+    border: none;
+    background: #ffe8e8;
+    color: #b00020;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0;                /* убираем padding */
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;        /* круглая кнопка */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.add-btn {
+    background: #1a5f9c;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 40px;
+    font-weight: 600;
+    margin-top: 15px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.build-btn {
+    background: #1a5f9c;
+    color: white;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: 600;
+    padding: 16px 40px;
+    border-radius: 40px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 20px;
+}

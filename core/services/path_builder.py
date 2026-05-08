@@ -21,7 +21,6 @@ class PathBuilder:
             return {'nodes': [], 'edges': []}
 
         skill_ids = {s.id for s in skills}
-        skill_by_id = {s.id: s for s in skills}
         if importance is None:
             importance = {}
 
@@ -69,88 +68,39 @@ class PathBuilder:
             })
 
         return {'nodes': nodes, 'edges': edges}
-
+    
     @staticmethod
-    def build_tree(skills: List[Skill], user_skills: Set[int], importance: Dict[int, int] = None) -> List[Dict]:
-        """
-        Строит лес деревьев навыков на основе пререквизитов.
-        importance: dict {skill_id: importance} для сортировки детей (по убыванию)
-        Возвращает список корневых узлов, каждый узел:
-        {
-            'skill': Skill,
-            'importance': int,
-            'children': [...]
+    def build_full_graph_with_standalone(
+        all_hard_tool_skills: List[Skill], 
+        user_skills: Set[int], 
+        importance: Dict[int, int]
+    ) -> Dict:
+        # строим полный граф
+        full_graph = PathBuilder.build_graph(all_hard_tool_skills, user_skills, importance)
+        # вычисляем, какие узлы имеют рёбра
+        nodes_with_edges = set()
+        for edge in full_graph['edges']:
+            nodes_with_edges.add(edge['source'])
+            nodes_with_edges.add(edge['target'])
+        connected_skills = []
+        standalone_skills = []
+        for skill in all_hard_tool_skills:
+            if str(skill.id) in nodes_with_edges:
+                connected_skills.append(skill)
+            else:
+                standalone_skills.append(skill)
+        # строим граф только для связанных, если они есть
+        if connected_skills:
+            graph = PathBuilder.build_graph(connected_skills, user_skills, importance)
+        else:
+            graph = {'nodes': [], 'edges': []}
+        return {
+            'graph': graph,
+            'standalone_skills': standalone_skills
         }
-        """
-        if not skills:
-            return []
-
-        # Множество id переданных навыков для быстрого поиска
-        skill_ids = {s.id for s in skills}
-        # Сопоставление id -> объект Skill
-        skill_by_id = {s.id: s for s in skills}
-        # importance по умолчанию 0
-        if importance is None:
-            importance = {}
-
-        # 1. Построить граф зависимостей (только внутри skills)
-        #    children[parent_id] = list of child_ids (где parent - прямой пререквизит child)
-        children = {sid: [] for sid in skill_ids}
-        # Также запомним, какие навыки имеют родителей (чтобы потом найти корни)
-        has_parent = set()
-
-        for skill in skills:
-            prereqs = SkillPrerequisiteRepository.get_prerequisites(skill)
-            for prereq in prereqs:
-                prereq_skill = prereq.prerequisite_skill
-                if prereq_skill.id in skill_ids:
-                    # Пререквизит есть в нашем списке -> строим ребро prereq -> skill
-                    children[prereq_skill.id].append(skill.id)
-                    has_parent.add(skill.id)
-                elif prereq_skill.id not in user_skills:
-                    # Пререквизит отсутствует и у пользователя, и в списке – это ошибка,
-                    # так как _expand_missing_with_prerequisites должен был его добавить.
-                    raise ValueError(
-                        f"Prerequisite '{prereq_skill.name}' for skill '{skill.name}' "
-                        f"is missing both in provided skills list and user skills."
-                    )
-                # Если пререквизит есть у пользователя – игнорируем (уже изучен, не входит в дерево)
-
-        # 2. Корни – навыки, у которых нет родителей в нашем графе
-        roots_ids = [sid for sid in skill_ids if sid not in has_parent]
-        # Сортируем корни по важности (по убыванию) для предсказуемости
-        roots_ids.sort(key=lambda sid: importance.get(sid, 0), reverse=True)
-
-        # 3. Рекурсивная функция построения узла
-        def build_node(skill_id: int) -> Dict:
-            node_skill = skill_by_id[skill_id]
-            # Дети – это навыки, для которых текущий является прямым пререквизитом
-            child_ids = children.get(skill_id, [])
-            # Сортируем детей по важности (убывание)
-            child_ids.sort(key=lambda cid: importance.get(cid, 0), reverse=True)
-            children_nodes = [build_node(cid) for cid in child_ids]
-            return {
-                'skill': {
-                    'id': node_skill.id,
-                    'name': node_skill.name,
-                    # при необходимости можно добавить другие поля
-                },
-                'importance': importance.get(skill_id, 0),
-                'children': children_nodes
-            }
-
-        # Строим лес
-        forest = [build_node(root_id) for root_id in roots_ids]
-        return forest
-
 
     @staticmethod
     def build_sequence(skills: List[Skill], user_skills: Set[int]) -> List[Skill]:
-        """
-        Упорядочивает переданные навыки с учётом пререквизитов.
-        Предполагается, что список skills уже содержит все необходимые навыки
-        (включая добавленные пререквизиты). Повторного расширения не происходит.
-        """
         # Множество id переданных навыков
         skills_ids = {s.id for s in skills}
 
@@ -215,6 +165,12 @@ class PathBuilder:
                 prereqs = SkillPrerequisiteRepository.get_prerequisites(skill)
                 for prereq in prereqs:
                     prereq_skill = prereq.prerequisite_skill
+                    if prereq_skill.pk is None:
+                        logger.warning(f"Prerequisite '{prereq_skill.name}' has no pk, skipping")
+                        continue
+                    if not Skill.objects.filter(id=prereq_skill.id).exists():
+                        logger.warning(f"Prerequisite '{prereq_skill.name}' (id={prereq_skill.id}) does not exist in Skills table, skipping")
+                        continue
                     if prereq_skill.id not in user_skills and prereq_skill not in missing_set:
                         missing_set.add(prereq_skill)
                         changed = True

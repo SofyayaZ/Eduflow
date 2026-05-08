@@ -1,0 +1,111 @@
+.history-page {
+    max-width: 1000px;
+    width: 100%;
+    background: white;
+    border-radius: 32px;
+    box-shadow: 0 20px 35px rgba(0,0,0,0.05);
+    margin: 40px auto;
+    padding: 40px;
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.history-card {
+    background: #f9fafc;
+    border-radius: 24px;
+    border: 1px solid #e0e8ef;
+    overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.1s;
+}
+
+.history-card:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+.history-card.current {
+    border-left: 6px solid #1a5f9c;
+    background: #f0f6ff;
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    padding: 20px 24px 8px 24px;
+    border-bottom: 1px solid #e0e8ef;
+}
+
+.history-target {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #0a1a2b;
+}
+
+.history-date {
+    font-size: 0.85rem;
+    color: #5f6c7a;
+    background: #eef3f8;
+    padding: 4px 12px;
+    border-radius: 40px;
+}
+
+.current-badge {
+    background: #1a5f9c;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 40px;
+    margin-left: 12px;
+    vertical-align: middle;
+}
+
+.history-steps {
+    padding: 16px 24px 24px 24px;
+}
+
+.history-steps h4 {
+    font-size: 1rem;
+    color: #2c3e50;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.empty-history {
+    text-align: center;
+    padding: 40px;
+    color: #7f8c8d;
+    background: #f9fafc;
+    border-radius: 24px;
+    border: 1px dashed #d0ddee;
+}
+.steps-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.step-item {
+    background: white;
+    border: 1px solid #d0ddee;
+    border-radius: 40px;
+    padding: 6px 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #1a2b3c;
+    transition: all 0.2s;
+}
+
+.step-item:hover {
+    background: #eef3fc;
+    border-color: #1a5f9c;
+    transform: translateY(-2px);
+}

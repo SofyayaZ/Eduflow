@@ -1,20 +1,17 @@
-// SkillNode.jsx
 import React from 'react';
 import { Handle, Position } from '@xyflow/react';
+import '../../styles/components/skill-node.css';
 
 export default function SkillNode({ data }) {
+  const importanceClass = data.importance > 7 
+    ? 'skill-node--high-importance' 
+    : 'skill-node--normal-importance';
+
   return (
-    <div style={{
-      padding: '10px',
-      borderRadius: '8px',
-      background: data.importance > 7 ? '#E3F2FD' : '#FFF',
-      border: '2px solid #1a5f9c',
-      minWidth: '120px',
-      textAlign: 'center'
-    }}>
+    <div className={`skill-node ${importanceClass}`}>
       <Handle type="target" position={Position.Top} />
-      <div style={{ fontWeight: 'bold' }}>{data.label}</div>
-      <div style={{ fontSize: '12px', color: '#666' }}>Важность: {data.importance}</div>
+      <div className="skill-node__title">{data.label}</div>
+      <div className="skill-node__importance">Важность: {data.importance}</div>
       <Handle type="source" position={Position.Bottom} />
     </div>
   );

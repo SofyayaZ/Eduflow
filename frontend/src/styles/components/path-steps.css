@@ -1,0 +1,84 @@
+/* Контейнер шагов */
+.steps-plan {
+  margin: 30px 0 40px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.steps-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-left: 20px;
+}
+
+/* Сетка карточек */
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+/* Карточка шага */
+.step-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: white;
+  border-radius: 16px;
+  padding: 12px 18px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+}
+
+.step-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  border-color: #cfe2ff;
+}
+
+/* Номер шага */
+.step-number {
+  width: 40px;
+  height: 40px;
+  background: #1a5f9c;
+  color: white;
+  font-weight: bold;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 40px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(26, 95, 156, 0.3);
+}
+
+/* Название навыка */
+.step-name {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #212529;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .steps-grid {
+    grid-template-columns: 1fr;
+  }
+  .step-card {
+    padding: 10px 14px;
+  }
+  .step-number {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+}
