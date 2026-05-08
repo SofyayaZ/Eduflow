@@ -45,36 +45,13 @@ class GeneratePathView(APIView):
         # 4. Список всех недостающих навыков (без частот)
         all_missing = [skill for skill, _ in missing_skills]
 
-        # 5. Расширяем ВЕСЬ список пререквизитами (добавляем то, чего не хватает)
+        # 5. Расширяем весь список пререквизитами (добавляем то, чего не хватает)
         expanded_skills = PathBuilder._expand_missing_with_prerequisites(all_missing, user_skills)
 
-        # 6. Формируем список пар (skill, важность) для расширенного списка
-        expanded_pairs = []
-        for skill in expanded_skills:
-            freq = importance.get(skill.id, 0)   # для добавленных навыков важность = 0
-            expanded_pairs.append((skill, freq))
-
-        # 7. Сортируем по убыванию важности
-        expanded_pairs.sort(key=lambda x: x[1], reverse=True)
-
-        # 8. Берём первые 10 навыков (это и будет траектория, но порядок может скорректировать топология)
-        top_10_pairs = expanded_pairs[:10]
-        top_10_skills = [skill for skill, _ in top_10_pairs]
-
-        # 9. Строим итоговую последовательность с учётом зависимостей
-        try:
-            skills_sequence = PathBuilder.build_sequence(top_10_skills, user_skills)
-        except ValueError as e:
-            return Response({'error': str(e)}, status=400)
-
-        # 10. Сохраняем траекторию
-        try:
-            PathBuilder.create_path(request.user, target, skills_sequence)
-        except Exception as e:
-            return Response({'error': f'Failed to create path: {str(e)}'}, status=500)
-
-        # 11. Возвращаем ответ (полный список недостающих и топ-10)
+        graph = PathBuilder.build_graph(expanded_skills, user_skills, importance)\
+        
         return Response({
-            'missing_skills': [{'id': skill.id, 'name': skill.name} for skill, _ in expanded_pairs],
-            'path': [{'order': i+1, 'skill': skill.name} for i, skill in enumerate(skills_sequence)]
+            'missing_skills': [{'id': s.id, 'name': s.name} for s in expanded_skills],
+            'graph': graph
         })
+    

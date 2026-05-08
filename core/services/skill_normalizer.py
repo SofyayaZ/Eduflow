@@ -7,16 +7,17 @@ import requests
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from core.models import Skill
 from core.repository import SkillRepository
+from core.services.skill_type_classifier import SkillTypeClassifier
 
 
 logger = logging.getLogger(__name__)
-
 breaker = pybreaker.CircuitBreaker(fail_max=3, reset_timeout=60)
 
 class SkillNormalizer:
     def __init__(self, api_url : str = None, api_key : str = None):
         self.api_url = api_url or settings.DEEPSEEK_API_URL
         self.api_key = api_key or settings.DEEPSEEK_API_KEY
+        self.type_classifier = SkillTypeClassifier(api_url, api_key)
         self.canonical_map = {
             "питон" : "Python",
             "python3" : "Python",
@@ -29,6 +30,9 @@ class SkillNormalizer:
             "редис" : "Redis",
             "R" : "R",
             "r" : "R",
+            "Layered architecture" : "Архитектура слоёв",
+            "asyncio" : "asyncio",
+            "Asyncio" : "asyncio",
         }
         
     # Формирует промпт для нормализации названия навыка
@@ -61,12 +65,6 @@ class SkillNormalizer:
         data = response.json()
         return data['choices'][0]['message']['content'].strip()
     
-    # def _canonicalize(self, name : str) -> str:
-    #     lower = name.lower()
-    #     if lower in self.canonical_map:
-    #         return self.canonical_map[lower]
-    #     # Если нет в словаре, просто приводим первую букву к заглавной
-    #     return name.capitalize()
         
     # Вызывает API для нормализации названия навыка, обрабатывает ошибки и возвращает нормализованное название
     # если навык не был приведён к каноническому виду с помощью словаря или не был изъят из кэша
@@ -110,6 +108,9 @@ class SkillNormalizer:
             return None
         skill, created = SkillRepository.get_or_create(name=normalized_name)
         if created:
-            logger.info(f"Created new skill: {normalized_name}")
+            skill_type = self.type_classifier.classify(normalized_name)
+            skill.skill_type = skill_type
+            skill.save(update_fields=['skill_type'])
+            logger.info(f"Created new skill: {normalized_name} with type: {skill_type}")
         return skill
     

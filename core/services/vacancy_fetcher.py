@@ -181,16 +181,16 @@ class HHVacancyFetcher:
         VacancyCache.save(vacancies_data)
         return saved_count
     
-    # @breaker
-    # @retry(
-    #     stop=stop_after_attempt(2),
-    #     wait=wait_fixed(1)
-    # )
-    # def _fetch_full_vacancy(self, vacancy_id: str) -> Dict[str, Any]:
-    #     url = f"https://api.hh.ru/vacancies/{vacancy_id}"
-    #     response = requests.get(url, timeout=10)
-    #     response.raise_for_status()
-    #     return response.json()
+    @breaker
+    @retry(
+        stop=stop_after_attempt(2),
+        wait=wait_fixed(1)
+    )
+    def _fetch_full_vacancy(self, vacancy_id: str) -> Dict[str, Any]:
+        url = f"https://api.hh.ru/vacancies/{vacancy_id}"
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        return response.json()
     
     def fetch_and_save(self):
         try:

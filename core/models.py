@@ -26,11 +26,23 @@ class User(AbstractUser):
 
 
 class Skill(models.Model):
+    class SkillType(models.TextChoices):
+        SOFT = 'soft', 'Мягкий'
+        HARD = 'hard', 'Технический'
+        TOOL = 'tool', 'Инструмент'
+
     name = models.CharField(max_length=255, unique=True)
+    skill_type = models.CharField(
+        max_length=10,
+        choices = SkillType.choices,
+        default = SkillType.HARD,
+        db_index = True
+    )
+
     class Meta:
         db_table = 'Skills'
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.get_skill_type_display()})"
 
 
 class Vacancy(models.Model):

@@ -9,12 +9,11 @@ from core.models import Skill
 from core.repository import SkillPrerequisiteRepository
 from itertools import combinations
 
-
 logger = logging.getLogger(__name__)
 breaker = pybreaker.CircuitBreaker(fail_max=3, reset_timeout=60)
 
 class PrerequisiteExtractor:
-    def __init__(self, api_url : str = None, api_key : str = None):
+    def __init__(self, api_url: str = None, api_key: str = None):
         self.api_url = api_url or settings.DEEPSEEK_API_URL
         self.api_key = api_key or settings.DEEPSEEK_API_KEY
         self.prerequisite_map = {
@@ -30,6 +29,7 @@ class PrerequisiteExtractor:
             ('Kubernetes', 'Docker'): True,
             ('SQL', 'PostgreSQL'): True,
             ('SQL', 'MySQL'): True,
+            ('SQL', 'SQLAlchemy'): True,
             ('Git', 'Linux'): False,
         }
 
@@ -39,11 +39,10 @@ class PrerequisiteExtractor:
         wait=wait_exponential(multiplier=1, min=2, max=10),
         retry=retry_if_exception_type(requests.exceptions.RequestException)
     )
-
-    def _call_api(self, prompt : str) -> str:
+    def _call_api(self, prompt: str) -> str:
         headers = {
-            "Authorization" : f"Bearer {self.api_key}",
-            "Content-Type" : "application/json"
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
         }
         payload = {
             "model": "deepseek-chat",
@@ -57,24 +56,29 @@ class PrerequisiteExtractor:
         data = response.json()
         return data['choices'][0]['message']['content'].strip().lower()
 
-
-    def _build_prompt(self, skill_a : str, skill_b : str) -> str:
+    def _build_prompt(self, skill_a: str, skill_b: str) -> str:
         return f'''Нужен ли для освоения навыка {skill_a} навык (prerequisite) {skill_b}? Ответь только "да" или "нет" без пояснений'''
-    
 
-    def _is_prerequisite(self, skill_a : Skill, skill_b : Skill) -> bool:
+    def _is_prerequisite(self, skill_a: Skill, skill_b: Skill) -> bool:
+        if skill_a is None or skill_b is None:
+            return False
+        
+        if (hasattr(skill_a, 'skill_type') and skill_a.skill_type == Skill.SkillType.SOFT) or (hasattr(skill_b, 'skill_type') and skill_b.skill_type == Skill.SkillType.SOFT):
+                logger.debug(f"Skipping pair due to soft skill: {skill_a.name} - {skill_b.name}")
+                return
+                             
         name_a = skill_a.name
         name_b = skill_b.name
 
         if name_a == name_b:
             return False
-        
+
         # проверка словаря
         pair = (name_a, name_b)
         if pair in self.prerequisite_map:
             logger.info(f"Prerequisite map hit for {name_a} and prereq {name_b}")
             return self.prerequisite_map[pair]
-        
+
         # проверка кэша
         cache_key = f"prereq:{name_b}:skill:{name_a}"
         cached = cache.get(cache_key)
@@ -86,7 +90,7 @@ class PrerequisiteExtractor:
         try:
             prompt = self._build_prompt(name_a, name_b)
             answer = self._call_api(prompt)
-            result = answer=='да'
+            result = answer == 'да'
             cache.set(cache_key, result, timeout=60*60*24*30)
             logger.info(f"LLM hit for {name_a} and prereq {name_b}, answer - {result}")
             return result
@@ -94,18 +98,25 @@ class PrerequisiteExtractor:
             logger.error(f"Failed api call: {e}")
             return False
 
-    # метод анализирует все пары из списка и добавляет пары в таблицу пререквизитов
-    def extract_and_save_prerequisites(self, skills_list : List[Skill]):
+    def extract_and_save_prerequisites(self, skills_list: List[Skill]):
+        skills_list = [s for s in skills_list if s is not None]
         created_count = 0
         for skill_a, skill_b in combinations(skills_list, 2):
+            # Пропускаем пары, где хотя бы один навык - soft
+            if (hasattr(skill_a, 'skill_type') and skill_a.skill_type == Skill.SkillType.SOFT) or \
+               (hasattr(skill_b, 'skill_type') and skill_b.skill_type == Skill.SkillType.SOFT):
+                logger.debug(f"Skipping pair due to soft skill: {skill_a.name} - {skill_b.name}")
+                continue
+
             if self._is_prerequisite(skill_a, skill_b):
                 _, created = SkillPrerequisiteRepository.get_or_create(skill_a, skill_b)
                 if created:
                     created_count += 1
-                    logger.info(f"Added {skill_a}, prereq{skill_b} to db")
+                    logger.info(f"Added {skill_a.name} -> prereq {skill_b.name} to db")
             if self._is_prerequisite(skill_b, skill_a):
                 _, created = SkillPrerequisiteRepository.get_or_create(skill_b, skill_a)
                 if created:
                     created_count += 1
-                    logger.info(f"Added {skill_b}, prereq{skill_a} to db")
+                    logger.info(f"Added {skill_b.name} -> prereq {skill_a.name} to db")
         return created_count
+    
