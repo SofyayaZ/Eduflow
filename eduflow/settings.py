@@ -86,7 +86,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'eduflow_db',
         'USER': 'postgres',
-        'PASSWORD': '*5uma4+7', # сейчас нужно для тестов, в продакшене нужно заменить
+        'PASSWORD': os.getenv('DB_PASSWORD', '*5uma4+7'), # сейчас нужно для тестов, в продакшене нужно заменить
         'HOST': 'localhost',
         'PORT': '5432',
     }
@@ -170,11 +170,16 @@ CELERY_TASK_TRACK_STARTED = True
 CELERY_BEAT_SCHEDULE = {
     'fetch-vacancies-weekly': {
         'task': 'core.tasks.fetch_tasks.fetch_vacancies',
-        'schedule': crontab(hour=2, minute=8),
+        'schedule': crontab(hour=1, minute=0),
     },
     'delete-old-vacancies-weekly': {
         'task': 'core.tasks.cleanup_tasks.delete_old_vacancies',
-        'schedule': crontab(day_of_week='sunday', hour=4, minute=0),  # раз в неделю
+        'schedule': crontab(day_of_week='sunday', hour=2, minute=0),  # раз в неделю
+    },
+    'check-prerequisites-cycle-every-day': {
+        'task': 'core.tasks.check_prerequisites_cycle',
+        'schedule': crontab(hour=3, minute=0),  # каждый день в 3:00 ночи
+        # 'schedule': timedelta(seconds=30),  # для теста каждые 30 секунд
     },
 }
 

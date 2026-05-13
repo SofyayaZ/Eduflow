@@ -38,7 +38,7 @@ def job_target(db):
 def vacancy(db, job_target):
     return Vacancy.objects.create(
         id_vacancy="123",
-        title="Backend Dev",
+        title="Backend Developer",
         company="Tech",
         source="trudvsem",
         job_target=job_target,

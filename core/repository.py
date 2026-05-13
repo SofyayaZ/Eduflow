@@ -162,6 +162,10 @@ class VacancySkillRepository:
             .values('skill') \
             .annotate(importance=Count('vacancy')) \
             .order_by('-importance')
+    
+    @staticmethod
+    def get_global_skill_importance():
+        return VacancySkill.objects.values('skill').annotate(importance=Count('vacancy')).order_by('-importance')
 
 
 class SkillPrerequisiteRepository:

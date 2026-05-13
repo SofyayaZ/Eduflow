@@ -17,7 +17,7 @@ class SkillExtractor:
 
     def _build_prompt(self, text: str) -> str:
         return f"""Ты — эксперт по извлечению навыков из текстов вакансий. Твоя задача — выделить только конкретные, измеримые навыки (hard, soft или инструменты), а не общие области деятельности или должностные обязанности. Примеры хороших навыков:
-                        Python, SQL, Docker, Kubernetes, Git, Pandas, Tableau, Коммуникация, Управление проектами, Аналитическое мышление.
+                        Python, SQL, Docker, Kubernetes, Git, Pandas, Tableau, Коммуникация, Управление проектами.
 
                         Примеры плохих, общих формулировок (НЕ включай их):
                         анализ данных, машинное обучение, разработка ПО, работа с клиентами, ведение отчётности.
@@ -66,3 +66,4 @@ class SkillExtractor:
         except Exception as e:
             logger.error(f"Error extracting skills from text: {e}")
             return []
+        

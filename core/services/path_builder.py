@@ -142,7 +142,7 @@ class PathBuilder:
         return [id_to_skill[sid] for sid in result_ids]
     
     @staticmethod
-    def _expand_missing_with_prerequisites(missing_skills: List[Skill], user_skills: Set[int]) -> List[Skill]:
+    def expand_missing_with_prerequisites(missing_skills: List[Skill], user_skills: Set[int]) -> List[Skill]:
         """
         Расширяет список недостающих навыков, добавляя все необходимые 
         транзитивные пререквизиты, которые отсутствуют у пользователя.

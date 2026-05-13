@@ -69,3 +69,18 @@ class GeneratedPathSerializer(serializers.ModelSerializer):
     class Meta:
         model = GeneratedPath
         fields = ['id', 'target', 'generated_at', 'is_current', 'steps']
+
+# Для админа
+class JobTargetAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobTarget
+        fields = ['id', 'name', 'is_active']
+        read_only_fields = ['id']
+
+class FetchVacanciesSerializer(serializers.Serializer):
+    job_target_ids = serializers.ListField(
+        child=serializers.IntegerField(), required=False,
+        help_text="ID целей для сбора. Если не указаны – используются активные цели"
+    )
+    region_code = serializers.CharField(max_length=50, required=False, help_text="Код региона (например, 77 для Москвы и 47 для Питера)")
+    async_mode = serializers.BooleanField(default=False, help_text="Запустить через Celery асинхронно или синхронно")

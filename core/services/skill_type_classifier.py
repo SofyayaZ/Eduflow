@@ -82,7 +82,7 @@ class SkillTypeClassifier:
             'google sheets': Skill.SkillType.TOOL,
             'powerpoint': Skill.SkillType.TOOL,
             'microsoft powerpoint': Skill.SkillType.TOOL,
-            'python': Skill.SkillType.TOOL,          # язык программирования → инструмент
+            'python': Skill.SkillType.TOOL, 
             'pandas': Skill.SkillType.TOOL,
             'numpy': Skill.SkillType.TOOL,
             'scipy': Skill.SkillType.TOOL,

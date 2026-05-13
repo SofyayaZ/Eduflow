@@ -1,4 +1,5 @@
 import logging
+import re
 import time
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
@@ -11,12 +12,10 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential,
     retry_if_exception_type,
-    wait_fixed,
 )
 
 from core.models import JobTarget, Vacancy
 from core.repository import VacancyRepository, VacancySkillRepository
-from core.services.cache_manager import VacancyCache
 from core.services.skill_normalizer import SkillNormalizer
 from core.services.skill_extractor import SkillExtractor
 from core.services.prerequisite_extractor import PrerequisiteExtractor
@@ -27,11 +26,14 @@ breaker = pybreaker.CircuitBreaker(fail_max=3, reset_timeout=60)
 
 class VacancyFetcher:
     BASE_URL = "http://opendata.trudvsem.ru/api/v1/vacancies"
-    PER_PAGE = 50       # максимальное количество на страницу согласно WADL  - 100
+    PER_PAGE = 10       # максимальное количество на страницу согласно WADL  - 100
     MAX_PAGES = 1       # ограничим число страниц
 
-    def __init__(self, region_code: str = None):
-        self.job_titles = self._get_active_job_titles()
+    def __init__(self, job_titles: List[str] = None, region_code: str = None):
+        if job_titles is None:
+            self.job_titles = self._get_active_job_titles()
+        else:
+            self.job_titles = job_titles
         self.region_code = region_code
 
     @staticmethod
@@ -55,13 +57,23 @@ class VacancyFetcher:
 
     def _build_params(self, page: int, job_title: str) -> Dict[str, Any]:
         params = {
-            'text': job_title,
+            'text': job_title,   # точная фраза
             'limit': self.PER_PAGE,
             'offset': page * self.PER_PAGE,
         }
         if self.region_code:
             params['region'] = self.region_code
         return params
+    
+    def _build_url(self, job_title: str) -> str:
+        """Формирует URL для запроса вакансий с учётом региона."""
+        base_url = self.BASE_URL
+        if self.region_code:
+            # Добавляем код региона в путь URL
+            url = f"{base_url}/region/{self.region_code}"
+        else:
+            url = base_url
+        return url
 
     @breaker
     @retry(
@@ -70,10 +82,15 @@ class VacancyFetcher:
         retry=retry_if_exception_type(requests.exceptions.RequestException)
     )
     def _fetch_page(self, job_title: str, page: int) -> Dict[str, Any]:
-        params = self._build_params(page, job_title)
-        logger.debug(f"Запрос страницы {page} для '{job_title}' с параметрами {params}")
-        headers = {'User-Agent': 'EduFlow/1.0 (contact@eduflow.ru)'}
-        response = requests.get(self.BASE_URL, params=params, headers=headers, timeout=15)
+        params = {
+            'text': job_title,
+            'limit': self.PER_PAGE,
+            'offset': page * self.PER_PAGE,
+        }
+        url = self._build_url(job_title)
+        logger.debug(f"Запрос страницы {page} для '{job_title}': {url} с параметрами {params}")
+        headers = {'User-Agent': 'EduFlow/1.0 (soniazaitceva@gmail.com)'}
+        response = requests.get(url, params=params, headers=headers, timeout=15)
         response.raise_for_status()
         return response.json()
 
@@ -89,7 +106,7 @@ class VacancyFetcher:
                 all_items.extend(vacancies_list)
                 if len(vacancies_list) < self.PER_PAGE:
                     break
-                time.sleep(2)  # снижена задержка (было 30)
+                time.sleep(30)  # снижена задержка (было 30)
             except Exception as e:
                 logger.error(f"Ошибка при загрузке страницы {page} для '{job_title}': {e}")
                 break
@@ -104,10 +121,8 @@ class VacancyFetcher:
         saved_count = 0
         skill_extractor = SkillExtractor()
         skill_normalizer = SkillNormalizer()
-        prereq_extractor = PrerequisiteExtractor()
 
         for title in self.job_titles:
-            # Получаем объект JobTarget
             job_target = JobTarget.objects.filter(name=title).first()
             if not job_target:
                 logger.warning(f"JobTarget с именем '{title}' не найден в БД")
@@ -118,13 +133,24 @@ class VacancyFetcher:
                 logger.warning(f"Не собрано вакансий для '{title}'")
                 continue
 
+            # Фильтруем вакансии: оставляем только те, у которых название содержит title (без учёта регистра)
+            filtered_vacancies = []
             for vac_raw in vacancies_raw:
+                inner = vac_raw.get('vacancy', vac_raw)
+                vac_title = inner.get('job-name') or inner.get('profession') or ''
+                if self._matches_job_title(title, vac_title):
+                    filtered_vacancies.append(vac_raw)
+                else:
+                    logger.debug(f"Вакансия '{vac_title}' не соответствует профессии '{title}', пропускаем")
+
+            logger.info(f"После фильтрации по названию осталось {len(filtered_vacancies)} вакансий из {len(vacancies_raw)}")
+
+            for vac_raw in filtered_vacancies:
                 inner = vac_raw.get('vacancy', vac_raw)
                 vac_id = self._get_vacancy_id(vac_raw)
                 if not vac_id:
                     continue
 
-                # Проверяем, не существует ли уже вакансия с таким id (чтобы не дублировать между целями)
                 if Vacancy.objects.filter(id_vacancy=vac_id).exists():
                     logger.debug(f"Вакансия {vac_id} уже существует, пропускаем")
                     continue
@@ -143,7 +169,7 @@ class VacancyFetcher:
                     'company': company,
                     'source': 'trudvsem',
                     'region': region,
-                    'job_target': job_target,   # <- связь с целью
+                    'job_target': job_target,
                 }
                 vac_object, created = VacancyRepository.get_or_create(**vacancy_data)
 
@@ -154,10 +180,9 @@ class VacancyFetcher:
                 saved_count += 1
 
                 if description:
-                    logger.info(f"Извлечение навыков для вакансии: {title}")
+                    logger.info(f"Извлечение навыков для вакансии: {title_vac}")
                     vac_object.description = description
                     vac_object.save(update_fields=['description'])
-                    logger.debug(f"Для вакансии {vac_id} сохранено описание (длина {len(description)})")
 
                     try:
                         skills_raw = skill_extractor.extract(description)
@@ -171,7 +196,6 @@ class VacancyFetcher:
                                 VacancySkillRepository.get_or_create(vacancy=vac_object, skill=skill)
                         if normalized_skills:
                             logger.info(f"Для вакансии {vac_id} нормализовано {len(normalized_skills)} навыков")
-                            prereq_extractor.extract_and_save_prerequisites(normalized_skills)
                     except Exception as e:
                         logger.error(f"Ошибка обработки навыков для вакансии {vac_id}: {e}")
                 else:
@@ -189,4 +213,23 @@ class VacancyFetcher:
         except ValueError:
             logger.warning(f"Не удалось распарсить дату: {date_str}")
             return datetime.now(timezone.utc)
+        
+    @staticmethod
+    def _matches_job_title(target_title: str, vacancy_title: str) -> bool:
+        """
+        Проверяет, соответствует ли название вакансии целевой профессии.
+        Разбивает на ключевые слова (игнорирует пунктуацию, регистр).
+        """
+        if not target_title or not vacancy_title:
+            return False
+
+        # Нормализуем целевую строку: заменяем знаки препинания на пробелы, приводим к нижнему регистру
+        target_normalized = re.sub(r'[-/_.,]', ' ', target_title.lower())
+        target_words = set(target_normalized.split())
+
+        vacancy_normalized = re.sub(r'[-/_.,]', ' ', vacancy_title.lower())
+        vacancy_words = set(vacancy_normalized.split())
+
+        # Все слова из цели должны присутствовать в названии вакансии
+        return target_words.issubset(vacancy_words)
     

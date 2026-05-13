@@ -1,6 +1,5 @@
 import pytest
 import vcr
-import os
 from django.core.management import call_command
 from core.models import JobTarget, Vacancy, VacancySkill, Skill
 from core.services.vacancy_fetcher import VacancyFetcher

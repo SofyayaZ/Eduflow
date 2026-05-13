@@ -143,7 +143,7 @@ class TestGeneratePathView:
         assert data['soft_skills'] == []
         assert 'graph' in data
 
-        mock_has_vacancies.assert_called_once_with(user_target.target_job.name, region='Moscow')
+        mock_has_vacancies.assert_called_once_with(user_target.target_job, region='Moscow')
         mock_get_missing.assert_called_once_with(test_user, user_target.target_job.name)
         mock_user_skills.assert_called_once_with(test_user)
         mock_expand.assert_called_once_with([skill_django], {skill_python.id})

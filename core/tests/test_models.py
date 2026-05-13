@@ -302,8 +302,9 @@ class TestPathStepModel:
         skill_python.delete()
         assert PathStep.objects.filter(id=step.id).count() == 0
 
-    # Дополнительно: если нужно, чтобы step_order был уникальным в рамках одного пути, добавьте тест на IntegrityError
+    # step_order уникальный в рамках одного пути
     def test_unique_step_order_per_path(self, generated_path, skill_python, skill_django):
         PathStep.objects.create(generated_path=generated_path, skill=skill_python, step_order=1)
         with pytest.raises(IntegrityError):
             PathStep.objects.create(generated_path=generated_path, skill=skill_django, step_order=1)
+            

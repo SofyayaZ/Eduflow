@@ -6,3 +6,5 @@ from .JobTargetViewSet import JobTargetViewSet
 from .UserSkillViewSet import UserSkillViewSet
 from .UserTargetViewSet import UserTargetViewSet
 from .SkillViewSet import SkillViewSet
+from .AdminViewSet import AdminJobTargetViewSet
+from .AdminViewSet import FetchVacanciesAdminView

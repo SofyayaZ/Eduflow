@@ -1,5 +1,5 @@
 import logging
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 from django.conf import settings
 from django.core.cache import cache
 import pybreaker
@@ -18,19 +18,24 @@ class PrerequisiteExtractor:
         self.api_url = api_url or settings.DEEPSEEK_API_URL
         self.api_key = api_key or settings.DEEPSEEK_API_KEY
         self.prerequisite_map = {
-            ('Django', 'Python'): True,
-            ('FastAPI', 'Python'): True,
-            ('Flask', 'Python'): True,
-            ('NumPy', 'Python'): True,
-            ('Scikit-learn', 'Python'): True,
-            ('TensorFlow', 'Python'): True,
-            ('PyTorch', 'Python'): True,
-            ('DRF', 'Django'): True,
-            ('Docker', 'Linux'): True,
-            ('Kubernetes', 'Docker'): True,
+            ('Python', 'Django'): True,
+            ('Python', 'FastAPI'): True,
+            ('Python', 'Flask'): True,
+            ('Python', 'NumPy'): True,
+            ('Python', 'Scikit-learn'): True,
+            ('Python', 'TensorFlow'): True,
+            ('Python', 'PyTorch'): True,
+            ('Django', 'DRF'): True,
+            ('Linux', 'Docker'): True,
+            ('Docker', 'Kubernetes'): True,
             ('PostgreSQL', 'SQL'): True,
-            ('MySQL', 'SQL'): True,
-            ('SQLAlchemy', 'SQL'): True,
+            ('SQL', 'MySQL'): True,
+            ('SQL', 'SQLAlchemy'): True,
+            ('Python', 'Celery'): True,
+            ('Тестирование', 'Тест-кейсы'): True,
+            ('Тестирование', 'Тестовая документация'): True,
+            # запрещаем ложные связи:
+            ('Apache Spark', 'Python'): False,
             ('Git', 'Linux'): False,
         }
 
@@ -49,7 +54,7 @@ class PrerequisiteExtractor:
             "model": "deepseek-chat",
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.2,
-            "max_tokens": 20  # чуть больше для двух ответов
+            "max_tokens": 20  # для двух ответов
         }
         response = requests.post(self.api_url, json=payload, headers=headers, timeout=30)
         logger.info(f"Status: {response.status_code}, Response: {response.text}")
@@ -58,22 +63,31 @@ class PrerequisiteExtractor:
         return data['choices'][0]['message']['content'].strip().lower()
 
     def _build_bidirectional_prompt(self, name_a: str, name_b: str) -> str:
-        return f"""Для двух навыков: "{name_a}" и "{name_b}".
-            Ответь на два вопроса, разделив ответы запятой (без лишних символов):
-            1. Является ли "{name_a}" необходимым prerequisite для освоения "{name_b}"? (да/нет)
-            2. Является ли "{name_b}" необходимым prerequisite для освоения "{name_a}"? (да/нет)
-            Важно: оба навыка не могут быть необходимы друг для друга одновременно.
-            Пример ответа: да, нет"""
+        return f"""Ты эксперт в IT-образовании. Определи, является ли один навык необходимым prerequisite (базовым) для другого.
+                    Навык A: "{name_a}"
+                    Навык B: "{name_b}"
+                    Ответь в формате "да, нет" / "нет, да" / "нет, нет" (без кавычек) на два вопроса:
+                    1. Нужно ли сначала изучить "{name_a}", чтобы потом изучать "{name_b}"? (да/нет)
+                    2. Нужно ли сначала изучить "{name_b}", чтобы потом изучать "{name_a}"? (да/нет)
+                    Правила:
+                    - Если A необходим для B, а B не нужен для A, то ответ "да, нет".
+                    - Если B необходим для A, а A не нужен для B, то ответ "нет, да".
+                    - Если они независимы, то "нет, нет".
+                    - Никогда не отвечай "да, да".
+                    Примеры:
+                    - A="Python", B="Django" → ответ: да, нет
+                    - A="Django", B="Python" → ответ: нет, да
+                    - A="Git", B="Docker" → ответ: нет, нет
+                    Твой ответ:"""
 
     def _parse_bidirectional_answer(self, answer: str, name_a: str, name_b: str) -> Tuple[bool, bool]:
         """Парсит строку вида 'да, нет' в два булевых значения."""
         answer_clean = answer.lower().strip()
         parts = [p.strip() for p in answer_clean.split(',')]
         if len(parts) != 2:
-            # fallback: ищем отдельные слова "да"/"нет"
+            # ищем отдельные слова "да"/"нет"
             a_to_b = 'да' in answer_clean
             b_to_a = False
-            # Если есть два слова, можно попробовать сложнее, но лучше залогировать
             logger.warning(f"Unexpected answer format: '{answer}' for pair ({name_a}, {name_b})")
         else:
             a_to_b = parts[0] == 'да'
@@ -121,40 +135,49 @@ class PrerequisiteExtractor:
             logger.error(f"Failed to check prerequisites between {name_a} and {name_b}: {e}")
             return False, False
 
-    def extract_and_save_prerequisites(self, skills_list: List[Skill]) -> int:
-        """Извлекает и сохраняет связи prerequisite для списка навыков."""
+    def extract_and_save_prerequisites(self, skills_list: List[Skill], 
+                                    importance_map: Dict[int, int] = None,
+                                    min_freq: int = 5) -> int:
         skills_list = [s for s in skills_list if s is not None]
         created_count = 0
 
         for skill_a, skill_b in combinations(skills_list, 2):
             # Пропускаем soft-навыки
             if (hasattr(skill_a, 'skill_type') and skill_a.skill_type == Skill.SkillType.SOFT) or \
-               (hasattr(skill_b, 'skill_type') and skill_b.skill_type == Skill.SkillType.SOFT):
+            (hasattr(skill_b, 'skill_type') and skill_b.skill_type == Skill.SkillType.SOFT):
                 logger.debug(f"Skipping pair due to soft skill: {skill_a.name} - {skill_b.name}")
                 continue
 
-            # Один вызов для обоих направлений
+            # Фильтр по частоте
+            if importance_map is not None:
+                freq_a = importance_map.get(skill_a.id, 0)
+                freq_b = importance_map.get(skill_b.id, 0)
+                if freq_a < min_freq or freq_b < min_freq:
+                    logger.debug(f"Пропуск пары {skill_a.name}-{skill_b.name}: частоты {freq_a}/{freq_b} ниже {min_freq}")
+                    continue
+
+            # Определяем направление зависимостей
             a_to_b, b_to_a = self._check_bidirectional(skill_a, skill_b)
 
-            # Защита от циклов (уже обработана в _parse_bidirectional_answer, но повторим для страховки)
+            # Защита от циклов
             if a_to_b and b_to_a:
                 logger.warning(f"Both directions for {skill_a.name} <-> {skill_b.name} – skipping pair")
                 continue
 
-            # Добавляем A -> B, если нужно и нет обратной связи
+            # Сохраняем A -> B
             if a_to_b:
                 if not SkillPrerequisiteRepository.exists(skill_b, skill_a):
-                    _, created = SkillPrerequisiteRepository.get_or_create(skill_a, skill_b)
+                    _, created = SkillPrerequisiteRepository.get_or_create(skill_b, skill_a)
                     if created:
                         created_count += 1
                         logger.info(f"Added {skill_a.name} -> {skill_b.name}")
                 else:
                     logger.warning(f"Reverse link already exists, skipping {skill_a.name} -> {skill_b.name}")
 
-            # Добавляем B -> A, если нужно и нет обратной связи
+            # Сохраняем B -> A
             if b_to_a:
                 if not SkillPrerequisiteRepository.exists(skill_a, skill_b):
-                    _, created = SkillPrerequisiteRepository.get_or_create(skill_b, skill_a)
+                    _, created = SkillPrerequisiteRepository.get_or_create(skill_a, skill_b)
                     if created:
                         created_count += 1
                         logger.info(f"Added {skill_b.name} -> {skill_a.name}")

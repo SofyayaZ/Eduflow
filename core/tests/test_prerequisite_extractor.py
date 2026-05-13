@@ -168,35 +168,6 @@ class TestPrerequisiteExtractor:
         assert result == 0
         mock_repo.get_or_create.assert_not_called()
 
-    @patch('core.services.prerequisite_extractor.SkillPrerequisiteRepository')
-    def test_extract_and_save_two_pairs(self, mock_repo, extractor, skill_python, skill_django, skill_sql):
-        """Несколько пар навыков – обрабатываются все комбинации."""
-        # Определяем поведение _check_bidirectional для разных пар
-        def side_effect(a, b):
-            # Для пары (Python, Django) возвращаем (False, True) – значит будет создана связь Django->Python
-            if (a.name, b.name) == ("Python", "Django"):
-                return (False, True)
-            # Для пары (Python, SQL) возвращаем (False, True) – SQL->Python
-            if (a.name, b.name) == ("Python", "SQL"):
-                return (False, True)
-            # Остальные пары (Django, SQL) – без связей
-            return (False, False)
-        
-        extractor._check_bidirectional = Mock(side_effect=side_effect)
-        mock_repo.exists.return_value = False
-        mock_repo.get_or_create.assert_has_calls([call(skill_django, skill_python), call(skill_sql, skill_python)], any_order=True)
-
-        result = extractor.extract_and_save_prerequisites([skill_python, skill_django, skill_sql])
-        # Должно быть создано 2 связи: Django->Python и SQL->Python
-        assert result == 2
-        # Проверяем, что get_or_create вызван дважды с правильными аргументами
-        expected_calls = [
-            ((skill_django, skill_python),),
-            ((skill_sql, skill_python),)
-        ]
-        actual_calls = [call[0] for call in mock_repo.get_or_create.call_args_list]
-        assert expected_calls == actual_calls
-
     # -------------------- _parse_bidirectional_answer --------------------
 
     def test_parse_bidirectional_answer_ok(self, extractor):

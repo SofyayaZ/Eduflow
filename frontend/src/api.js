@@ -1,6 +1,18 @@
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode'; // npm install jwt-decode
+import { jwtDecode } from 'jwt-decode';
 
+// --------------------------------------------------------------
+// Функция выхода
+// --------------------------------------------------------------
+const logout = () => {
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  window.location.href = '/login';
+};
+
+// ----------------------------------------------
+//  Создание экземпляра api
+// ----------------------------------------------
 const api = axios.create({
   baseURL: '/api/v1/',
 });
@@ -16,7 +28,10 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-// Функция обновления токена (вынесена для переиспользования)
+
+// ----------------------------------------------
+//  Функция обновления токена (без использования api)
+// ----------------------------------------------
 const refreshToken = async () => {
   const refresh = localStorage.getItem('refresh_token');
   if (!refresh) throw new Error('No refresh token');
@@ -25,7 +40,9 @@ const refreshToken = async () => {
   return data.access;
 };
 
-// Проверка, истёк ли токен
+// ----------------------------------------------
+//  Проверка истёкшего токена
+// ----------------------------------------------
 const isTokenExpired = (token) => {
   if (!token) return true;
   try {
@@ -36,9 +53,9 @@ const isTokenExpired = (token) => {
   }
 };
 
-// --------------------------------------------------------------
-// Request interceptor – проверяем токен до отправки запроса
-// --------------------------------------------------------------
+// ----------------------------------------------
+//  Request interceptor
+// ----------------------------------------------
 api.interceptors.request.use(
   async (config) => {
     let token = localStorage.getItem('access_token');
@@ -53,20 +70,26 @@ api.interceptors.request.use(
           processQueue(null, newToken);
         } catch (err) {
           processQueue(err, null);
-          logout();  // редирект на логин
+          logout();          // редирект на страницу входа
           throw err;
         } finally {
           isRefreshing = false;
         }
       } else {
-        // Уже идёт процесс обновления – ждём в очереди
-        await new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        });
-        token = localStorage.getItem('access_token');
+        // Уже идёт обновление – ждём в очереди
+        try {
+          await new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          });
+          token = localStorage.getItem('access_token');
+        } catch (err) {
+          // Если обновление не удалось, пробрасываем ошибку дальше
+          throw err;
+        }
       }
     }
     
+    // Устанавливаем токен в заголовок (важно!)
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -75,10 +98,9 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// --------------------------------------------------------------
-// Response interceptor – на случай, если 401 всё же пришёл
-// (например, из‑за параллельного запроса)
-// --------------------------------------------------------------
+// ----------------------------------------------
+//  Response interceptor (страховка от 401)
+// ----------------------------------------------
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -97,14 +119,5 @@ api.interceptors.response.use(
     }
   }
 );
-
-// --------------------------------------------------------------
-// Функция выхода
-// --------------------------------------------------------------
-const logout = () => {
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
-  window.location.href = '/login';
-};
 
 export default api;

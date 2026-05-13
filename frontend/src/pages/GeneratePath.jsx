@@ -17,12 +17,6 @@ export default function GeneratePath() {
     api.get('/user-targets/').then(res => setUserTargets(res.data));
   }, []);
 
-  const hardMissingSkills = useMemo(() => {
-    if (!result?.missing_skills) return [];
-    const softIds = new Set((result.soft_skills || []).map(s => s.id));
-    return result.missing_skills.filter(skill => !softIds.has(skill.id));
-  }, [result]);
-
   const handleGenerate = () => generate(selectedTargetId);
 
   return (

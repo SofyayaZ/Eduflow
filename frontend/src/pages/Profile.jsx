@@ -7,7 +7,7 @@ import SkillsSection from '../components/SkillsSection';
 import TargetsSection from '../components/TargetsSection';
 import RegionSection from '../components/RegionSection';
 
-const REGION_OPTIONS = ['Москва', 'Санкт-Петербург', 'Казань', 'Новосибирск', 'Екатеринбург'];
+const REGION_OPTIONS = ['Москва', 'Санкт-Петербург'];
 
 export default function Profile() {
   const { user, setUser } = useAuth();

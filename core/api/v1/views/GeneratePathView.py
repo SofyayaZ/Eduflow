@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from core.models import Skill, UserTarget
 from core.repository import UserSkillRepository
 from core.services.path_builder import PathBuilder
+from core.services.ranking_service import RankingService
 from core.services.skill_matching import SkillMatchingService
 
 
@@ -46,14 +47,12 @@ class GeneratePathView(APIView):
         all_missing = [skill for skill, _ in missing_skills]
 
         # 5. Расширяем весь список пререквизитами (добавляем то, чего не хватает)
-        expanded_skills = PathBuilder._expand_missing_with_prerequisites(all_missing, user_skills)
+        expanded_skills = PathBuilder.expand_missing_with_prerequisites(all_missing, user_skills)
 
-        # 6. Полная последовательность обрезается до 10 первых шагов
-        try:
-            full_sequence = PathBuilder.build_sequence(expanded_skills, user_skills)
-        except ValueError as e:
-            return Response({'error': f'Ошибка построения зависимостей: {str(e)}'}, status=400)
-        
+        # 6. Полная последовательность ранжируется и обрезается до 10 первых шагов
+        pairs = [(skill, importance.get(skill.id, 0)) for skill in expanded_skills]
+        ranked_skills = RankingService.rank_skills_by_importance(pairs)
+        full_sequence = PathBuilder.build_sequence(ranked_skills, user_skills)
         truncated_sequence = full_sequence[:10]
         
         # 7. Сохранение последовательности в БД

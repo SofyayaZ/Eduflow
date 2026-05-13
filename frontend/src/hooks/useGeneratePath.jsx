@@ -14,7 +14,8 @@ export function useGeneratePath() {
       const { data } = await api.post('/generate-path/', { job_target_id: targetId });
       setResult(data);
     } catch (err) {
-      // ... обработка ошибок
+      const message = err.response?.data?.error || err.response?.data?.message || 'Не удалось построить траекторию';
+      setErrorMessage(message);
       setResult(null);
     } finally {
       setLoading(false);

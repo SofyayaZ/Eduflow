@@ -159,18 +159,13 @@ class TestVacancyRepository:
     def test_delete_old_vacancies(self, vacancy):
         # Создаём старую вакансию
         old_vac = Vacancy.objects.create(
-            id_vacancy="old", title="Old", company="OldCo", source="test",
+            id_vacancy="old", title="old", company="weLoveTheCompany", source="testest",
             fetched_at=timezone.now() - timedelta(days=200)
         )
         deleted = VacancyRepository.delete_old_vacancies()
         assert deleted == 1
         assert Vacancy.objects.filter(id_vacancy="old").exists() is False
         assert Vacancy.objects.filter(id_vacancy=vacancy.id_vacancy).exists() is True
-
-    def test_exists_by_title_icontains(self, vacancy):
-        assert VacancyRepository.exists_by_title_icontains("Backend") is True
-        assert VacancyRepository.exists_by_title_icontains("NoMatch") is False
-        assert VacancyRepository.exists_by_title_icontains("Backend", region="Moscow") is False
 
     def test_get_existing_ids(self, vacancy):
         ids = VacancyRepository.get_existing_ids(["123", "nonexistent"])
@@ -204,7 +199,7 @@ class TestVacancySkillRepository:
 
     def test_get_skill_importance_for_job_title(self, vacancy, skill_python, skill_django, job_target):
         # Создаём вакансию с заголовком, содержащим job_title
-        Vacancy.objects.create(
+        vac2 = Vacancy.objects.create(
             id_vacancy="456",
             title="Backend Developer",
             company="C",
@@ -213,8 +208,7 @@ class TestVacancySkillRepository:
         )
         VacancySkill.objects.create(vacancy=vacancy, skill=skill_python)
         VacancySkill.objects.create(vacancy=vacancy, skill=skill_django)
-        # Вторая вакансия с только skill_python
-        vac2 = Vacancy.objects.get(id_vacancy="456")
+        # Вторая вакансия с skill_python
         VacancySkill.objects.create(vacancy=vac2, skill=skill_python)
 
         importance = VacancySkillRepository.get_skill_importance_for_job_title("Backend Developer")

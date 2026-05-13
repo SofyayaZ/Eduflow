@@ -51,7 +51,7 @@ class Vacancy(models.Model):
     published_at = models.DateTimeField(default=timezone.now)                     # дата публикации
     company = models.CharField(max_length=255)                                    # компания-работодатель
     source = models.CharField(max_length=50)                                      # источник вакансии (например, hh.ru)
-    fetched_at = models.DateTimeField(auto_now_add=True)                          # дата загрузки в нашу БД
+    fetched_at = models.DateTimeField(default=timezone.now)                       # дата загрузки в нашу БД
     region = models.CharField(max_length=100, blank=True, db_index=True)          # регион вакансии
     description = models.TextField(blank=True)
     job_target = models.ForeignKey('JobTarget', null=True, on_delete=models.SET_NULL)
@@ -136,5 +136,8 @@ class PathStep(models.Model):
     class Meta:
         db_table = 'PathSteps'
         ordering = ['step_order']  # сортировка по порядку
+        constraints = [
+            models.UniqueConstraint(fields=['generated_path', 'step_order'], name='unique_step_order_per_path')
+        ]
     def __str__(self):
         return f"{self.generated_path}: step {self.step_order} - {self.skill.name}"

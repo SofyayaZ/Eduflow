@@ -31,7 +31,7 @@ def vacancies_and_skills(db, skills):
     return None
 
 def test_get_required_skills_for_target(vacancies_and_skills, skills):
-    required_skills = SkillMatchingService.get_required_skills_for_target(target_job_title='DevOps engineer')
+    required_skills = SkillMatchingService.get_required_skills_for_target(job_target_title='DevOps engineer')
     assert len(required_skills) == 3
     assert required_skills[0][0].name == 'CI/CD'
     assert required_skills[0][1] == 2
@@ -75,7 +75,7 @@ def test_get_missing_skills(test_user, skills):
     UserSkill.objects.create(user=test_user, skill=skills['kubernetes'])
     UserSkill.objects.create(user=test_user, skill=skills['harbor'])
     
-    missing_skills = SkillMatchingService.get_missing_skills(test_user, target_job_title='DevOps engineer')
+    missing_skills = SkillMatchingService.get_missing_skills(test_user, job_target_title='DevOps engineer')
     assert len(missing_skills) == 1
     assert missing_skills[0][0].name == 'CI/CD'
     assert missing_skills[0][1] == 2   # importance = количество вакансий с этим навыком = 2
