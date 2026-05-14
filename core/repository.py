@@ -213,6 +213,17 @@ class JobTargetRepository:
     @staticmethod
     def delete(job_target_id):
         JobTarget.objects.filter(id=job_target_id).delete()
+    
+    @staticmethod
+    def get_search_queries(self) -> List[str]:
+        """Возвращает список фраз для поиска: основное название и синонимы."""
+        queries = [self.name]
+        if self.search_terms:
+            for term in self.search_terms.split(','):
+                term = term.strip()
+                if term:
+                    queries.append(term)
+        return queries
 
 class UserTargetRepository:
     @staticmethod

@@ -137,7 +137,7 @@ class PrerequisiteExtractor:
 
     def extract_and_save_prerequisites(self, skills_list: List[Skill], 
                                     importance_map: Dict[int, int] = None,
-                                    min_freq: int = 5) -> int:
+                                    min_freq: int = 2) -> int:
         skills_list = [s for s in skills_list if s is not None]
         created_count = 0
 

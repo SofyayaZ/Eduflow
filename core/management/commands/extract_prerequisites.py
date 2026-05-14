@@ -6,7 +6,7 @@ from core.services.prerequisite_extractor import PrerequisiteExtractor
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        min_freq = 5
+        min_freq = 2
         importance = {item['skill']: item['importance'] for item in VacancySkillRepository.get_global_skill_importance()}
         skills = Skill.objects.filter(id__in=[sid for sid, freq in importance.items() if freq >= min_freq])
         extractor = PrerequisiteExtractor()

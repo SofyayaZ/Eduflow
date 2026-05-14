@@ -5,6 +5,8 @@ from core.models import GeneratedPath, Skill, User, UserTarget
 from core.repository import GeneratedPathRepository, PathStepRepository, SkillPrerequisiteRepository
 from collections import deque
 
+from core.services.ranking_service import RankingService
+
 
 logger = logging.getLogger(__name__)
 
@@ -197,3 +199,25 @@ class PathBuilder:
         for order, skill in enumerate(skills_sequence, start=1):
             PathStepRepository.create(path, skill, order)
         return path
+    
+    @staticmethod
+    def build_full_path(missing_skills: List[Skill],
+                        importance: Dict[int, int],
+                        user_skills: Set[int],
+                        max_steps: int = 10) -> List[Skill]:
+        """
+        Полностью строит траекторию обучения:
+        """
+        # 1. Расширяем пререквизитами
+        expanded = PathBuilder.expand_missing_with_prerequisites(missing_skills, user_skills)
+        
+        # 2. Ранжируем по важности
+        pairs = [(skill, importance.get(skill.id, 0)) for skill in expanded]
+        ranked = RankingService.rank_skills_by_importance(pairs)   # List[Skill]
+        
+        # 3. Топологическая сортировка
+        full_sequence = PathBuilder.build_sequence(ranked, user_skills)
+        
+        # 4. Обрезаем до max_steps
+        return full_sequence[:max_steps]
+    

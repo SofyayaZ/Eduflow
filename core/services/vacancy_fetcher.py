@@ -6,19 +6,17 @@ from typing import List, Dict, Any, Optional
 
 import pybreaker
 import requests
-from django.core.cache import cache
 from tenacity import (
     retry,
     stop_after_attempt,
     wait_exponential,
     retry_if_exception_type,
 )
-
-from core.models import JobTarget, Vacancy
-from core.repository import VacancyRepository, VacancySkillRepository
+from core.models import Vacancy
+from core.repository import JobTargetRepository, VacancyRepository, VacancySkillRepository
 from core.services.skill_normalizer import SkillNormalizer
 from core.services.skill_extractor import SkillExtractor
-from core.services.prerequisite_extractor import PrerequisiteExtractor
+
 
 logger = logging.getLogger(__name__)
 breaker = pybreaker.CircuitBreaker(fail_max=3, reset_timeout=60)
@@ -26,8 +24,8 @@ breaker = pybreaker.CircuitBreaker(fail_max=3, reset_timeout=60)
 
 class VacancyFetcher:
     BASE_URL = "http://opendata.trudvsem.ru/api/v1/vacancies"
-    PER_PAGE = 10       # максимальное количество на страницу согласно WADL  - 100
-    MAX_PAGES = 1       # ограничим число страниц
+    PER_PAGE = 100       # максимальное количество на страницу согласно WADL  - 100
+    MAX_PAGES = 2        # ограничим число страниц
 
     def __init__(self, job_titles: List[str] = None, region_code: str = None):
         if job_titles is None:
@@ -38,7 +36,7 @@ class VacancyFetcher:
 
     @staticmethod
     def _get_active_job_titles() -> List[str]:
-        return list(JobTarget.objects.filter(is_active=True).values_list('name', flat=True))
+        return list(JobTargetRepository.get_active().values_list('name', flat=True))
 
     @staticmethod
     def _get_vacancy_id(vac: Dict[str, Any]) -> Optional[str]:
@@ -56,6 +54,7 @@ class VacancyFetcher:
         return None
 
     def _build_params(self, page: int, job_title: str) -> Dict[str, Any]:
+        target = JobTargetRepository.get_by_name(name=job_title)
         params = {
             'text': job_title,   # точная фраза
             'limit': self.PER_PAGE,
@@ -104,9 +103,9 @@ class VacancyFetcher:
                 if not vacancies_list:
                     break
                 all_items.extend(vacancies_list)
+                time.sleep(30)
                 if len(vacancies_list) < self.PER_PAGE:
                     break
-                time.sleep(30)  # снижена задержка (было 30)
             except Exception as e:
                 logger.error(f"Ошибка при загрузке страницы {page} для '{job_title}': {e}")
                 break
@@ -123,22 +122,33 @@ class VacancyFetcher:
         skill_normalizer = SkillNormalizer()
 
         for title in self.job_titles:
-            job_target = JobTarget.objects.filter(name=title).first()
+            job_target = JobTargetRepository.get_by_name(name=title)
             if not job_target:
                 logger.warning(f"JobTarget с именем '{title}' не найден в БД")
                 continue
 
-            vacancies_raw = self._fetch_all_for_job_title(title)
-            if not vacancies_raw:
+            search_queries = JobTargetRepository.get_search_queries(job_target)
+            all_vacancies_raw = []
+            seen_ids = set()
+
+            for query in search_queries:
+                vacancies_raw = self._fetch_all_for_job_title(query)
+                for vac in vacancies_raw:
+                    vac_id = self._get_vacancy_id(vac)
+                    if vac_id and vac_id not in seen_ids:
+                        seen_ids.add(vac_id)
+                        all_vacancies_raw.append(vac)
+                    
+            if not all_vacancies_raw:
                 logger.warning(f"Не собрано вакансий для '{title}'")
                 continue
 
             # Фильтруем вакансии: оставляем только те, у которых название содержит title (без учёта регистра)
             filtered_vacancies = []
-            for vac_raw in vacancies_raw:
+            for vac_raw in all_vacancies_raw:
                 inner = vac_raw.get('vacancy', vac_raw)
-                vac_title = inner.get('job-name') or inner.get('profession') or ''
-                if self._matches_job_title(title, vac_title):
+                vac_title = inner.get('job-name')
+                if self._matches_any_query(vac_title, search_queries):
                     filtered_vacancies.append(vac_raw)
                 else:
                     logger.debug(f"Вакансия '{vac_title}' не соответствует профессии '{title}', пропускаем")
@@ -150,7 +160,6 @@ class VacancyFetcher:
                 vac_id = self._get_vacancy_id(vac_raw)
                 if not vac_id:
                     continue
-
                 if Vacancy.objects.filter(id_vacancy=vac_id).exists():
                     logger.debug(f"Вакансия {vac_id} уже существует, пропускаем")
                     continue
@@ -215,21 +224,17 @@ class VacancyFetcher:
             return datetime.now(timezone.utc)
         
     @staticmethod
-    def _matches_job_title(target_title: str, vacancy_title: str) -> bool:
-        """
-        Проверяет, соответствует ли название вакансии целевой профессии.
-        Разбивает на ключевые слова (игнорирует пунктуацию, регистр).
-        """
-        if not target_title or not vacancy_title:
+    def _matches_any_query(vacancy_title: str, search_queries: List[str]) -> bool:
+        if not vacancy_title:
             return False
-
-        # Нормализуем целевую строку: заменяем знаки препинания на пробелы, приводим к нижнему регистру
-        target_normalized = re.sub(r'[-/_.,]', ' ', target_title.lower())
-        target_words = set(target_normalized.split())
-
-        vacancy_normalized = re.sub(r'[-/_.,]', ' ', vacancy_title.lower())
-        vacancy_words = set(vacancy_normalized.split())
-
-        # Все слова из цели должны присутствовать в названии вакансии
-        return target_words.issubset(vacancy_words)
+        for query in search_queries:
+            target_normalized = re.sub(r'[-/_.,]', ' ', query.lower())
+            target_words = set(target_normalized.split())
+            if not target_words:
+                continue
+            vacancy_normalized = re.sub(r'[-/_.,]', ' ', vacancy_title.lower())
+            vacancy_words = set(vacancy_normalized.split())
+            if target_words.issubset(vacancy_words):
+                return True
+        return False
     

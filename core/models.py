@@ -1,3 +1,5 @@
+from typing import List
+
 from django.utils import timezone
 
 from django.db import models
@@ -64,6 +66,7 @@ class Vacancy(models.Model):
 class JobTarget(models.Model):
     name = models.CharField(max_length=255, unique=True)
     is_active = models.BooleanField(default=True)               # можно отключить сбор вакансий
+    search_terms = models.TextField(default=True)
     class Meta:
         db_table = 'JobTargets'
     def __str__(self):

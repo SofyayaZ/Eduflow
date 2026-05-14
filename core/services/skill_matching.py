@@ -8,7 +8,7 @@ from core.repository import (
 
 class SkillMatchingService:
     @staticmethod
-    def get_required_skills_for_target(job_target_title: str, region: str = None, min_freq: int = 3) -> List[Tuple[Skill, int]]:
+    def get_required_skills_for_target(job_target_title: str, region: str = None, min_freq: int = 2) -> List[Tuple[Skill, int]]:
         skills_importance = VacancySkillRepository.get_skill_importance_for_job_title(job_target_title, region=region)
         result = []
         for item in skills_importance:

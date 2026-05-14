@@ -4,7 +4,6 @@ from rest_framework.permissions import IsAuthenticated
 from core.models import Skill, UserTarget
 from core.repository import UserSkillRepository
 from core.services.path_builder import PathBuilder
-from core.services.ranking_service import RankingService
 from core.services.skill_matching import SkillMatchingService
 
 
@@ -46,16 +45,16 @@ class GeneratePathView(APIView):
         # 4. Список всех недостающих навыков (без частот)
         all_missing = [skill for skill, _ in missing_skills]
 
-        # 5. Расширяем весь список пререквизитами (добавляем то, чего не хватает)
+        # 5. Расширяем весь список пререквизитами и обрезаем до 10
         expanded_skills = PathBuilder.expand_missing_with_prerequisites(all_missing, user_skills)
-
-        # 6. Полная последовательность ранжируется и обрезается до 10 первых шагов
-        pairs = [(skill, importance.get(skill.id, 0)) for skill in expanded_skills]
-        ranked_skills = RankingService.rank_skills_by_importance(pairs)
-        full_sequence = PathBuilder.build_sequence(ranked_skills, user_skills)
-        truncated_sequence = full_sequence[:10]
+        truncated_sequence = PathBuilder.build_full_path(
+            missing_skills=all_missing,
+            importance=importance,
+            user_skills=user_skills,
+            max_steps=10
+        )
         
-        # 7. Сохранение последовательности в БД
+        # 6. Сохранение последовательности в БД
         try:
             generated_path = PathBuilder.create_path(request.user, target, truncated_sequence)
         except Exception as e:
@@ -65,11 +64,11 @@ class GeneratePathView(APIView):
             {'order': i+1, 'id': skill.id, 'name': skill.name}
             for i, skill in enumerate(truncated_sequence)]
 
-        # 8. Делим навыки по типам
+        # 7. Делим навыки по типам
         soft_skills = [s for s in expanded_skills if s.skill_type == Skill.SkillType.SOFT]
         hard_tool_skills = [s for s in expanded_skills if s.skill_type != Skill.SkillType.SOFT]
 
-        # 9. Получаем граф и изолированные навыки
+        # 8. Получаем граф и изолированные навыки
         if hard_tool_skills:
             result = PathBuilder.build_full_graph_with_standalone(
                 hard_tool_skills, user_skills, importance
@@ -80,7 +79,7 @@ class GeneratePathView(APIView):
             graph = {'nodes': [], 'edges': []}
             standalone_skills = []
 
-        # 10. Формируем ответ
+        # 9. Формируем ответ
         return Response({
             'path_id': generated_path.id,
             'ordered_steps': ordered_steps,

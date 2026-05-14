@@ -25,11 +25,3 @@ class ProfileView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# from rest_framework.generics import RetrieveUpdateAPIView
-# class ProfileView(RetrieveUpdateAPIView):
-#     serializer_class = UserSerializer
-#     permission_classes = [IsAuthenticated]
-#     def get_object(self):
-#         return self.request.user

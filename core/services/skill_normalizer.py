@@ -20,6 +20,7 @@ class SkillNormalizer:
         self.type_classifier = SkillTypeClassifier()
         self.canonical_map = {
             "питон" : "Python",
+            "Python" : "Python",
             "python3" : "Python",
             "джанго" : "Django",
             "fastapi" : "FastAPI",
@@ -33,6 +34,9 @@ class SkillNormalizer:
             "Layered architecture" : "Архитектура слоёв",
             "asyncio" : "asyncio",
             "Asyncio" : "asyncio",
+            "Grafana" : "Grafana",
+            "Zabbix" : "Zabbix",
+            
         }
         
     # Формирует промпт для нормализации названия навыка
