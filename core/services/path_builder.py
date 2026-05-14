@@ -3,7 +3,6 @@ import logging
 from typing import List, Set, Dict
 from core.models import GeneratedPath, Skill, User, UserTarget
 from core.repository import GeneratedPathRepository, PathStepRepository, SkillPrerequisiteRepository
-from collections import deque
 
 from core.services.ranking_service import RankingService
 
@@ -170,9 +169,6 @@ class PathBuilder:
                     if prereq_skill.pk is None:
                         logger.warning(f"Prerequisite '{prereq_skill.name}' has no pk, skipping")
                         continue
-                    if not Skill.objects.filter(id=prereq_skill.id).exists():
-                        logger.warning(f"Prerequisite '{prereq_skill.name}' (id={prereq_skill.id}) does not exist in Skills table, skipping")
-                        continue
                     if prereq_skill.id not in user_skills and prereq_skill not in missing_set:
                         missing_set.add(prereq_skill)
                         changed = True
@@ -181,14 +177,12 @@ class PathBuilder:
         if iteration >= max_iterations:
             logger.warning("Maximum iterations reached while expanding prerequisites")
         
-        # Преобразуем обратно в список (сохраняем порядок исходных навыков в начале)
-        # Сначала идут исходные missing_skills, затем добавленные (уникальные)
+        # Преобразуем обратно в список
+        # Сначала идут исходные missing_skills, затем добавленные
         original_ids = {s.id for s in missing_skills}
         added_skills = [s for s in missing_set if s.id not in original_ids]
-        # Добавленные навыки можно отсортировать по имени для предсказуемости
-        added_skills.sort(key=lambda s: s.name)
         
-        # Возвращаем список: исходные (в исходном порядке) + добавленные
+        # Возвращаем список: исходные и добавленные
         result = list(missing_skills) + added_skills
         return result
     
@@ -199,6 +193,7 @@ class PathBuilder:
         for order, skill in enumerate(skills_sequence, start=1):
             PathStepRepository.create(path, skill, order)
         return path
+    
     
     @staticmethod
     def build_full_path(missing_skills: List[Skill],

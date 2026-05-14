@@ -86,7 +86,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'eduflow_db',
         'USER': 'postgres',
-        'PASSWORD': os.getenv('DB_PASSWORD', '*5uma4+7'), # сейчас нужно для тестов, в продакшене нужно заменить
+        'PASSWORD': os.getenv('DB_PASSWORD'),
         'HOST': 'localhost',
         'PORT': '5432',
     }
